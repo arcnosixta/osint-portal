@@ -18,21 +18,25 @@ activity that violates local law or a target's terms of service.
 - **Target allow-list.** Before any segment runs a process, the target must
   fall inside `OSINT_ALLOWED_TARGETS` (CIDRs, IPs, IPv6, domains). Defaults to
   loopback + private + link-local ranges and `localhost` only — public targets
-  require an operator to explicitly allow them.
-- **Argument allow-list per tool.** Segments forward only whitelisted flags and
-  values. The reference nmap segment rejects unknown flags, output-redirect
-  flags (`-oN`/`-oX`), script loading (`--script`), input lists (`-iL`) and
-  malformed port/timing specs.
+  require an operator to explicitly allow them. Raw IP/CIDR targets are always
+  gated. The only exception: read-only DNS/registry segments (dig, host, whois)
+  accept well-formed public **hostnames** (never raw IPs) because the DNS query
+  itself is the intent — they can't be repurposed as an open scanning relay.
+- **Argument allow-list per tool.** Every segment declares exactly which flags,
+  values and positional tokens it forwards (shared validator in
+  `src/lib/segments/args.ts`). Unknown flags are rejected: nmap `-oN`/`-oX`,
+  `--script`, `-iL`; netcat `-e`/`-c`/`-l`; dig `@resolver`; sherlock
+  `--output`; any `>`/`<` redirect.
 - **Shell-metacharacter rejection.** The executor seam blocks any argument
   containing `/[;&|`$<>(){}\n\r]/` before a segment is invoked.
 - **Id validation.** Tool ids must match `/^[a-z0-9-_.]+$/i`.
 - **Timeouts & output caps.** Every run enforces a hard timeout
-  (`OSINT_RUN_TIMEOUT_MS`, default 20s) and a captured-output ceiling
-  (`OSINT_MAX_OUTPUT_BYTES`, default 64KB). Timed-out processes are SIGKILLed.
+  (`OSINT_RUN_TIMEOUT_MS`, default 20s, 60s for sherlock) and a
+  captured-output ceiling (`OSINT_MAX_OUTPUT_BYTES`, default 64KB).
+  Timed-out processes are SIGKILLed.
 - **Dynamic APIs.** Route handlers are `force-dynamic`; nothing is prerendered
   with runtime data. Blocked targets respond `403`.
-- **Planned hardening** (lands with further segments):
-  - explicit per-tool argument schemas beyond the current flag allow-lists,
+- **Future hardening:**
   - structured, auditable run logs,
   - sandboxed process spawning (seccomp / containers) for untrusted tools.
 

@@ -127,7 +127,15 @@ export class AllowList {
     }
   }
 
-  contains(target: string): boolean {
+  /**
+   * Target eligibility. By default only explicitly allow-listed IPs, CIDRs and
+   * hostnames pass. When `publicHostnames` is true, any well-formed hostname
+   * (public or local) is also allowed — used by read-only DNS/registry segments
+   * (dig, host, whois) where the query itself is the intent. Raw IP/CIDR
+   * targets are still strictly gated, so the portal never becomes an open
+   * scanning relay.
+   */
+  contains(target: string, opts?: { publicHostnames?: boolean }): boolean {
     const t = target.trim();
     if (!t) return false;
 
@@ -145,6 +153,7 @@ export class AllowList {
 
     const host = t.replace(/\.$/, "").toLowerCase();
     if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/.test(host)) return false;
+    if (opts?.publicHostnames) return true;
     for (const allowed of this.hosts) {
       if (host === allowed || host.endsWith("." + allowed)) return true;
     }

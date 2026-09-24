@@ -1,4 +1,9 @@
 import { runNmapSegment } from "./nmap";
+import { runNetcatSegment } from "./netcat";
+import { runDigSegment } from "./dig";
+import { runHostSegment } from "./host";
+import { runWhoisSegment } from "./whois";
+import { runSherlockSegment } from "./sherlock";
 
 /** Shape of a run request as seen by segment runners. */
 export interface SegmentRequest {
@@ -18,6 +23,11 @@ export type SegmentRunner = (req: SegmentRequest) => Promise<SegmentRunResult>;
 
 export const SEGMENTS: Record<string, SegmentRunner> = {
   nmap: (req) => runNmapSegment(req.target, req.args ?? []),
+  netcat: (req) => runNetcatSegment(req.target, req.args ?? []),
+  dig: (req) => runDigSegment(req.target, req.args ?? []),
+  host: (req) => runHostSegment(req.target, req.args ?? []),
+  whois: (req) => runWhoisSegment(req.target, req.args ?? []),
+  sherlock: (req) => runSherlockSegment(req.target, req.args ?? []),
 };
 
 export function isSegmentConnected(toolId: string): boolean {

@@ -1,5 +1,5 @@
 import { getAllowList } from "../security/allowlist";
-import { isBinaryAvailable } from "../binary";
+import { resolveBinary } from "../binary";
 import { runProcess } from "./spawn";
 import type { SegmentRunResult } from "./index";
 
@@ -131,7 +131,7 @@ export async function runNmapSegment(
   target: string | undefined,
   args: string[],
 ): Promise<SegmentRunResult> {
-  const available = isBinaryAvailable("nmap");
+  const available = resolveBinary("nmap") !== null;
 
   if (!target) {
     return {
@@ -171,8 +171,9 @@ export async function runNmapSegment(
   const maxOutputBytes = Number(process.env.OSINT_MAX_OUTPUT_BYTES ?? 64_000);
 
   const started = Date.now();
+  const bin = resolveBinary("nmap")!;
   const res = await runProcess(
-    "nmap",
+    bin,
     ["-Pn", ...built.args, target],
     { timeoutMs, maxOutputBytes },
   );

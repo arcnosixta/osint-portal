@@ -34,9 +34,15 @@ collectors, correlates the results into a graph, and produces a report.
       Collect → Correlate → Analyze → Visualize → Report.
 - [x] **API skeleton** — safe seams (`/api/tools/*`) for tool execution with
       built-in shell-metacharacter filtering.
-- [x] **nmap segment (reference)** — live execution behind a target allow-list
-      and per-flag argument validation, with timeout/output caps, structured
-      parsing (`data.ports`, `data.os`) and 11 unit tests.
+- [x] **Six live segments** (one PR per tool, all behind per-segment
+      argument allow-lists, timeouts and output caps, with parser tests):
+      - **nmap** — network scan (ports, service/OS fingerprint), `data.ports`.
+      - **netcat** — TCP connect-probe of single ports (Ncat), `data.ports`.
+      - **dig** — DNS lookups (A/AAAA/MX/TXT/NS/…), `data.records`.
+      - **host** — lightweight DNS resolution, `data.records`.
+      - **whois** — registry data (wired; needs `sudo apt install whois`).
+      - **sherlock** — username search across 400+ platforms
+        (`pip install --user sherlock-project`), `data.found`.
 - [ ] **More segments** — wiring real execution one pull request per tool.
 - [ ] **Workbench** — visual command center that drives the pipeline.
 
@@ -76,6 +82,16 @@ curl -X POST http://localhost:3000/api/tools/nmap \
   -H 'Content-Type: application/json' \
   -d '{"target":"127.0.0.1","args":["-p","80,443"]}'
 
+# DNS lookup (public hostnames allowed for read-only DNS segments)
+curl -X POST http://localhost:3000/api/tools/dig \
+  -H 'Content-Type: application/json' \
+  -d '{"target":"example.com","args":["-t","MX"]}'
+
+# Username search (installed via `pip install --user sherlock-project`)
+curl -X POST http://localhost:3000/api/tools/sherlock \
+  -H 'Content-Type: application/json' \
+  -d '{"target":"octocat","args":["--timeout","3"]}'
+
 # Run the tests
 npm test
 
@@ -84,7 +100,9 @@ curl http://localhost:3000/api/health
 ```
 
 By default only loopback/private targets are allowed; extend with
-`OSINT_ALLOWED_TARGETS` (see [`.env.example`](./.env.example)).
+`OSINT_ALLOWED_TARGETS` (see [`.env.example`](./.env.example)). Raw IP/CIDR
+targets are always gated; read-only DNS/registry segments (dig, host, whois)
+accept public hostname targets.
 
 ## Responsible use
 
@@ -100,16 +118,18 @@ Each tool is a "segment". Adding one is intentionally small:
 
 1. Register the tool in [`src/lib/tools.ts`](./src/lib/tools.ts) (id, name,
    command, description EN/RU, category, status).
-2. Implement an executor in `src/lib/executor.ts` following the existing stub
-   contract (validated args, explicit target, structured result).
-3. Ship tests. That's a reviewable PR that plugs the tool into the whole
-   platform — cards, detection, and workbench APIs at once.
+2. Implement a segment in `src/lib/segments/` — declare its argument
+   allow-list via the shared validator in `args.ts`, gate the target with
+   `allowList.contains(...)`, run through `spawn.ts`, parse structured output,
+   then register it in `src/lib/segments/index.ts`.
+3. Ship tests (`src/lib/**/*.test.ts`). That's a reviewable PR that plugs the
+   tool into the whole platform — cards, detection, and workbench APIs at once.
 
 See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the detailed contract.
 
 ## Roadmap
 
-- [ ] Segment wiring (sherlock, nmap, netcat, whois, dig, ...) behind allow-lists
+- [ ] More segment wiring (maigret, sublist3r, theHarvester, gobuster, ...) behind allow-lists
 - [ ] Interactive workbench / graph visualization
 - [ ] Evidence store + reproducible reports
 - [ ] GitHub Actions CI

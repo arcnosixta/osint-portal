@@ -69,7 +69,8 @@ export const TOOLS: Tool[] = [
     },
     category: "dns",
     tags: ["rdap", "registrar"],
-    status: "module",
+    status: "online",
+    local: true,
   },
   {
     id: "dig",
@@ -107,7 +108,8 @@ export const TOOLS: Tool[] = [
     },
     category: "username",
     tags: ["osint", "social", "usernames"],
-    status: "planned",
+    status: "online",
+    local: true,
     url: "https://github.com/sherlock-project/sherlock",
   },
   {

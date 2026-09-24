@@ -27,6 +27,23 @@ test("default allow-list rejects public and forged targets", () => {
   assert.ok(!a.contains("10.0.0.999"));
 });
 
+test("publicHostnames opt-in allows well-formed hostnames, not IPs", () => {
+  const a = new AllowList([]);
+  assert.ok(a.contains("example.com", { publicHostnames: true }));
+  assert.ok(a.contains("sub.example.com", { publicHostnames: true }));
+  assert.ok(a.contains("localhost", { publicHostnames: true }));
+  assert.ok(!a.contains("8.8.8.8", { publicHostnames: true }));
+  assert.ok(!a.contains("93.184.216.34", { publicHostnames: true }));
+  assert.ok(!a.contains("http://example.com", { publicHostnames: true }));
+  assert.ok(!a.contains("example.com:443", { publicHostnames: true }));
+});
+
+test("without publicHostnames, hostnames still require an allow-list entry", () => {
+  const a = new AllowList([]);
+  assert.ok(!a.contains("example.com"));
+  assert.ok(a.contains("localhost"));
+});
+
 test("OSINT-style CIDR entries extend the allow-list", () => {
   const a = new AllowList(["0.0.0.0/0", "example.com"]);
   assert.ok(a.contains("8.8.8.8"));

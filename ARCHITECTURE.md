@@ -34,10 +34,15 @@ through a single, stable seam instead of touching the whole platform.
 │ Segments (src/lib/segments)                                 │
 │  • index.ts       → SEGMENTS registry, isSegmentConnected   │
 │  • spawn.ts       → shell-free runner, timeout + cap        │
-│  • nmap.ts        → reference segment                       │
+│  • args.ts        → shared flag/value/positional validator  │
+│  • nmap.ts        → reference network scanner               │
+│  • netcat.ts      → TCP port probe (Ncat, one port/process) │
+│  • dig.ts, host.ts, whois.ts → DNS / registry read-only     │
+│  • sherlock.ts    → username search (pip --user install)    │
 │ Allow-list (src/lib/security/allowlist.ts)                  │
 │  • CIDR/IPv6/domain matcher, defaults private+loopback      │
 │  • env OSINT_ALLOWED_TARGETS extends it                     │
+│  • publicHostnames opt-in for read-only DNS/registry runs   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -79,10 +84,14 @@ Segments are the only place a process is ever spawned. Enforced now:
 
 - **Target allow-list.** `src/lib/security/allowlist.ts` checks every target
   against CIDR/IPv6/domain rules; defaults cover loopback + private ranges, and
-  `OSINT_ALLOWED_TARGETS` extends it. Restricted targets → `403`.
-- **Argument allow-lists per tool.** The nmap segment forwards only whitelisted
-  flags/values; output-redirect, script-loading and input-file flags are
-  rejected up front.
+  `OSINT_ALLOWED_TARGETS` extends it. Restricted targets → `403`. Raw IP/CIDR
+  targets are always gated; read-only DNS/registry segments (dig, host, whois)
+  additionally accept well-formed public hostnames via `publicHostnames` — the
+  query itself is the intent, and the portal never becomes an open scanning relay.
+- **Argument allow-lists per tool.** Every segment declares exactly which flags,
+  values and positional tokens it forwards via `src/lib/segments/args.ts`;
+  everything else is rejected up front (e.g. netcat `-e/-c`, dig `@resolver`,
+  sherlock `--output`, any `>`/`<` redirect).
 - Shell metacharacters are rejected before any executor runs.
 - Tool ids must match `/^[a-z0-9-_.]+$/i`.
 - Every run has a hard timeout (`OSINT_RUN_TIMEOUT_MS`, default 20s) and an
@@ -92,7 +101,8 @@ Segments are the only place a process is ever spawned. Enforced now:
 ## Testing
 
 `npm test` runs `src/lib/**/*.test.ts` with the node test runner (via `tsx`):
-allow-list semantics, nmap argument validation and nmap output parsing.
+allow-list semantics (incl. `publicHostnames`), shared argument validation,
+and parser tests for nmap, netcat, dig, host, whois and sherlock output.
 
 ## Bilingual UI
 
