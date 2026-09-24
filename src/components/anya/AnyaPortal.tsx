@@ -30,7 +30,7 @@ export function AnyaPortal() {
   // ---------- floating button ----------
   if (!open) {
     return (
-      <div className="fixed bottom-5 right-5 z-[70] flex items-center gap-3">
+      <div className="fixed bottom-5 right-5 z-[80] flex items-center gap-3">
         <span
           className={cn(
             "hidden rounded-full border border-primary/40 bg-black/80 px-3 py-1.5 font-mono text-xs text-primary sm:inline-block",
@@ -56,7 +56,7 @@ export function AnyaPortal() {
 
   // ---------- chat panel ----------
   return (
-    <div className="fixed bottom-5 right-5 z-[70] flex w-[min(92vw,380px)] max-h-[min(72vh,600px)] flex-col overflow-hidden rounded-2xl border border-primary/30 bg-[#040805]/95 shadow-[0_0_40px_rgba(0,255,65,0.22)] backdrop-blur-xl">
+    <div className="fixed bottom-5 right-5 z-[80] flex w-[min(92vw,380px)] max-h-[min(72vh,600px)] flex-col overflow-hidden rounded-2xl border border-primary/30 bg-[#040805]/95 shadow-[0_0_40px_rgba(0,255,65,0.22)] backdrop-blur-xl">
       {/* header */}
       <div className="flex items-center gap-3 border-b border-border px-4 py-3">
         <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-primary/30">

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import { AnyaAvatar, type AnyaMode } from "@/components/anya/AnyaAvatar";
 import { anyaMark, ANYA_IMAGE_PATHS } from "@/lib/anya/face";
@@ -11,32 +10,32 @@ interface AnyaFaceProps {
   emotion: AnyaEmotion;
   mode: AnyaMode;
   className?: string;
-  priority?: boolean;
 }
 
 /**
- * Photo-based Anya portrait. Falls back to the procedural SVG avatar when a
- * photo is not pushed to `public/anya/` yet.
+ * Photo-based Anya portrait. Plain <img> — no image optimization, wallpapers
+ * stay at full resolution (desktop project). Falls back to the procedural SVG
+ * avatar when a photo is not pushed to `public/anya/` yet.
  */
-export function AnyaFace({ emotion, mode, className, priority }: AnyaFaceProps) {
+export function AnyaFace({ emotion, mode, className }: AnyaFaceProps) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const mark = anyaMark(emotion, mode);
   const src = ANYA_IMAGE_PATHS[mark];
   const broken = failedSrc === src;
 
   if (broken) {
-    return <AnyaAvatar emotion={emotion} mode={mode === "thinking" ? "thinking" : "idle"} className={className} />;
+    return (
+      <AnyaAvatar emotion={emotion} mode={mode === "thinking" ? "thinking" : "idle"} className={className} />
+    );
   }
 
   return (
-    <Image
+    // eslint-disable-next-line @next/next/no-img-element -- no compression by design (user requirement)
+    <img
       src={src}
       alt=""
-      fill
-      priority={priority}
-      sizes="(max-width: 640px) 96px, 160px"
       onError={() => setFailedSrc(src)}
-      className={cn("object-cover", className)}
+      className={cn("h-full w-full object-cover", className)}
       draggable={false}
     />
   );
