@@ -161,6 +161,22 @@ export const en = {
     rights: "open source · free forever",
     built: "built with",
   },
+  anya: {
+    name: "Anya",
+    open: "Chat with Anya",
+    close: "Close",
+    status: "online",
+    placeholder: "Message Anya…",
+    send: "send",
+    clear: "clear",
+    thinking: "Anya is thinking…",
+    provider: "model",
+    localNote:
+      "No AI backend is connected yet — Anya answers from a built-in offline brain. Set ANYA_OLLAMA_URL, ANYA_GROQ_API_KEY or ANYA_OPENROUTER_API_KEY in .env.local to unlock real answers.",
+    networkError: "chat failed — is the dev server running?",
+    greeting:
+      "Hi! I'm Anya — the portal's AI assistant. Ask me about tools, workbench results or the next step in your OSINT investigation.",
+  },
 };
 
 export type Dictionary = typeof en;

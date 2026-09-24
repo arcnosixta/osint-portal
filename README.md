@@ -57,6 +57,12 @@ collectors, correlates the results and produces a report.
 | `traceroute` | network path: numbered hops + RTT samples | hops table |
 | `jq` | fetch JSON from an allow-listed URL and filter it | plain |
 
+- [x] **Anya** — a living AI assistant (floating chat, bottom-right). An
+      animated avatar blinks, tracks what you type, thinks and speaks; Anya
+      explains tools, reads workbench results and suggests next steps. Plug in
+      a **free** model backend (Ollama, Groq, OpenRouter) via `.env.local` —
+      or run her built-in offline brain with zero config.
+
 - [ ] **More segments** — wiring real execution one pull request per tool.
 - [ ] **Graph visualization** — correlate findings into an entity graph.
 
@@ -245,8 +251,39 @@ accept public hostname targets.
 | `OSINT_ALLOWED_TARGETS` | comma-separated extra targets (CIDRs/IPs/domains) | loopback + private ranges |
 | `OSINT_RUN_TIMEOUT_MS` | hard timeout per tool run | 20000 (sherlock 60000) |
 | `OSINT_MAX_OUTPUT_BYTES` | max captured stdout/stderr per run | 64000 |
+| `ANYA_OLLAMA_URL` | local Ollama endpoint (used automatically) | `http://127.0.0.1:11434` |
+| `ANYA_GROQ_API_KEY` | free Groq key (Llama 3.1 8B) | — |
+| `ANYA_OPENROUTER_API_KEY` | free OpenRouter `:free` models | — |
+| `ANYA_API_KEY` + `ANYA_BASE_URL` + `ANYA_MODEL` | any OpenAI-compatible endpoint | — |
+| `ANYA_TIMEOUT_MS` | hard timeout per Anya reply | 30000 |
 
 Copy `.env.example` to `.env.local` to override.
+
+### Anya — the AI assistant
+
+Anya lives in the bottom-right corner of every page:
+
+```bash
+# Chat with Anya
+curl -X POST http://localhost:3000/api/anya \
+  -H 'Content-Type: application/json' \
+  -d '{"language":"ru","messages":[{"role":"user","content":"как использовать nmap?"}]}'
+
+# See which model backends are configured
+curl http://localhost:3000/api/anya
+```
+
+**Free backends — pick any:**
+
+| Backend | Setup | Cost |
+|---|---|---|
+| [Ollama](https://ollama.com) (local) | `curl -fsSL https://ollama.com/install.sh \| sh` then `ollama pull qwen2.5:3b` | free, your hardware |
+| [Groq](https://console.groq.com/keys) | put `ANYA_GROQ_API_KEY` in `.env.local` | free tier |
+| [OpenRouter](https://openrouter.ai/keys) | put `ANYA_OPENROUTER_API_KEY` in `.env.local` (uses `:free` models) | free tier |
+| Any OpenAI-compatible API | `ANYA_API_KEY`/`ANYA_BASE_URL`/`ANYA_MODEL` | provider-dependent |
+
+With no backend configured Anya stays online using her built-in offline brain —
+and tells you how to upgrade her.
 
 ---
 

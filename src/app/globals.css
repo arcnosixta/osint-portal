@@ -242,6 +242,90 @@ body {
   animation: blink 1s step-end infinite;
 }
 
+/* ---------- Anya avatar ---------- */
+@keyframes anya-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes anya-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes anya-voice {
+  0%,
+  100% {
+    transform: scaleY(0.55);
+  }
+  50% {
+    transform: scaleY(1.12);
+  }
+}
+
+@keyframes anya-wait {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: translateY(1px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+}
+
+.anya-head {
+  transition: transform 0.35s ease;
+}
+
+.anya-float,
+.anya-listen {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+
+.anya-float {
+  animation: anya-float 4s ease-in-out infinite;
+}
+
+.anya-listen {
+  animation: anya-bob 1.9s ease-in-out infinite;
+}
+
+.anya-mouth {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+
+.anya-voice {
+  animation: anya-voice 0.28s ease-in-out infinite;
+}
+
+.anya-dots circle {
+  animation: anya-wait 1.1s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.anya-dots circle:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.anya-dots circle:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
 /* ---------- reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   .grid-floor,

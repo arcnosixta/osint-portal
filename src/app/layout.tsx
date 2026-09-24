@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import SmoothScroll from "@/components/SmoothScroll";
+import { AnyaPortal } from "@/components/anya/AnyaPortal";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
 import "./globals.css";
 
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <SmoothScroll />
           <div id="top" />
           {children}
+          <AnyaPortal />
         </LanguageProvider>
       </body>
     </html>
