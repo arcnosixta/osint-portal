@@ -1,26 +1,263 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: #00ff41;
+  --color-primary-dim: #00b32e;
+  --color-accent: #ff3333;
+  --color-background: #000000;
+  --color-surface: #050805;
+  --color-card: #0c130e;
+  --color-foreground: #e0e0e0;
+  --color-muted: #181818;
+  --color-muted-foreground: #94a3b8;
+  --color-border: #1f1f1f;
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: auto;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(0, 255, 65, 0.25);
+  color: #ffffff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ---------- scrollbar ---------- */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #000;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(#00b32e, #005c18);
+  border-radius: 8px;
+  border: 2px solid #000;
+}
+
+/* ---------- neon glow ---------- */
+.glow-strong {
+  text-shadow:
+    0 0 2px rgba(0, 255, 65, 0.9),
+    0 0 10px rgba(0, 255, 65, 0.7),
+    0 0 24px rgba(0, 255, 65, 0.45),
+    0 0 64px rgba(0, 255, 65, 0.25);
+}
+
+.glow-soft {
+  text-shadow: 0 0 12px rgba(0, 255, 65, 0.55), 0 0 46px rgba(0, 255, 65, 0.3);
+}
+
+.glow-red {
+  text-shadow:
+    0 0 2px rgba(255, 51, 51, 0.9),
+    0 0 12px rgba(255, 51, 51, 0.5),
+    0 0 40px rgba(255, 51, 51, 0.3);
+}
+
+/* ---------- scanlines + noise overlays ---------- */
+.scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.22) 3px,
+    transparent 4px
+  );
+  mix-blend-mode: multiply;
+  opacity: 0.6;
+}
+
+.noise::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- perspective grid floor ---------- */
+.grid-floor {
+  position: absolute;
+  left: 50%;
+  bottom: -4%;
+  width: 220%;
+  height: 64vh;
+  transform: translateX(-50%) perspective(600px) rotateX(62deg);
+  transform-origin: center top;
+  background-image:
+    linear-gradient(to right, rgba(0, 255, 65, 0.28) 1px, transparent 1px),
+    linear-gradient(to top, rgba(0, 255, 65, 0.28) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(ellipse 72% 62% at 50% 0%, black 20%, transparent 74%);
+  -webkit-mask-image: radial-gradient(ellipse 72% 62% at 50% 0%, black 20%, transparent 74%);
+  animation: grid-scroll 2.4s linear infinite;
+}
+
+@keyframes grid-scroll {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 52px;
+  }
+}
+
+/* ---------- blinked cursor / blinking ---------- */
+@keyframes blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.cursor-blink {
+  animation: blink 1.1s step-end infinite;
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.pulse-soft {
+  animation: pulse-soft 2.4s ease-in-out infinite;
+}
+
+/* ---------- glitch ---------- */
+@keyframes glitch-shift {
+  0% {
+    text-shadow:
+      2px 0 0 rgba(255, 51, 51, 0.8),
+      -2px 0 0 rgba(0, 255, 41, 0.8);
+    transform: translate(0);
+  }
+  20% {
+    text-shadow:
+      -2px 0 0 rgba(255, 51, 51, 0.8),
+      2px 0 0 rgba(0, 255, 41, 0.8);
+    transform: translate(1px, -1px);
+  }
+  40% {
+    text-shadow:
+      2px 0 0 rgba(255, 51, 51, 0.8),
+      -2px 0 0 rgba(0, 255, 41, 0.8);
+    transform: translate(-1px, 1px);
+  }
+  60% {
+    text-shadow:
+      -1px 0 0 rgba(255, 51, 51, 0.8),
+      1px 0 0 rgba(0, 255, 41, 0.8);
+    transform: translate(0);
+  }
+  100% {
+    text-shadow: none;
+    transform: translate(0);
+  }
+}
+
+.glitch {
+  animation: glitch-shift 3.6s infinite;
+}
+
+/* ---------- border pulse for cards ---------- */
+@keyframes border-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(0, 255, 65, 0.25), 0 0 24px rgba(0, 255, 65, 0.08);
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgba(0, 255, 65, 0.7), 0 0 42px rgba(0, 255, 65, 0.22);
+  }
+}
+
+.card-glow {
+  animation: border-pulse 5s ease-in-out infinite;
+}
+
+/* ---------- HUD corner brackets ---------- */
+.hud-corner {
+  position: relative;
+}
+.hud-corner::before,
+.hud-corner::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(0, 255, 65, 0.6);
+  pointer-events: none;
+}
+.hud-corner::before {
+  top: -2px;
+  left: -2px;
+  border-right: none;
+  border-bottom: none;
+}
+.hud-corner::after {
+  bottom: -2px;
+  right: -2px;
+  border-left: none;
+  border-top: none;
+}
+
+/* ---------- typed caret ---------- */
+.type-caret::after {
+  content: "▍";
+  color: var(--color-primary);
+  animation: blink 1s step-end infinite;
+}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .grid-floor,
+  .glitch,
+  .cursor-blink,
+  .pulse-soft,
+  .card-glow {
+    animation: none !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
