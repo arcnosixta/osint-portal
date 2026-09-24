@@ -18,6 +18,25 @@ shell-free API. Results come back as structured tables and a live-console log.
 
 ---
 
+## What's new
+
+- **Entity graph + evidence store.** Every successful run is recorded
+  (`/api/evidence`) and correlated into a visual graph (`/api/graph`). New
+  `/graph` page: canvas, counters, legend, click-to-inspect panels with
+  "next-tool" suggestions.
+- **Static, remembered layouts.** Graph nodes no longer drift on their own —
+  they settle once and only move while dragged. Positions and the last
+  snapshot are cached in localStorage; an empty/offline API falls back to the
+  cached copy with a *local cache* badge.
+- **Localization complete.** Workbench result badges, terminal banner,
+  related-tool cards and ARIA labels are now EN/RU (dictionaries are 1:1).
+- **Stable run history.** Shared history entries got globally-unique IDs (no
+  more React key collisions between tools), with migration of old entries.
+- **All tool binaries installed & documented** — see the matrix below and the
+  per-OS "install from scratch" guides (official sources only).
+
+---
+
 ## The vision
 
 OSINT is a chain, not a single command:
@@ -71,7 +90,17 @@ collectors, correlates the results and produces a report.
       or run her built-in offline brain with zero config. A dedicated
       full-screen pink page (`/anya`) cross-fades her mood photos.
 
-- [ ] **Graph visualization** — correlate findings into an entity graph.
+- [x] **Evidence store** — every successful run is persisted
+      (`/api/evidence`) and correlated into an entity graph (`/api/graph`):
+      usernames, domains, hosts, IPs, emails and ports become nodes; links keep
+      the "how" (`profile`, `resolution`, `port` …).
+- [x] **Entity graph page** (`/graph`) — an interactive canvas where nodes are
+      **static until you drag them** (no perpetual wandering), the layout is
+      saved to localStorage and restored on reload, and the server snapshot
+      falls back to a local cache when the API is empty or offline.
+- [x] **Fully localized UI** — workbench result badges, the terminal banner and
+      accessibility labels are EN/RU too (1:1 dictionaries, language kept in
+      localStorage).
 
 ---
 
@@ -105,11 +134,11 @@ running portal with every workbench unlocked.
 | `masscan` | `sudo apt install masscan` | `brew install masscan` | use WSL 2 ↴ |
 | `dig` / `host` | `sudo apt install dnsutils` | built-in (BIND) | use WSL 2 ↴ |
 | `whois` | `sudo apt install whois` | `brew install whois` | use WSL 2 ↴ |
-| `dnsrecon` | `pip install --user dnsrecon` | `pip install --user dnsrecon` | use WSL 2 ↴ |
-| `sublist3r` | `pip install --user sublist3r` | `pip install --user sublist3r` | use WSL 2 ↴ |
-| `theHarvester` | `pip install --user theHarvester` | `pip install --user theHarvester` | use WSL 2 ↴ |
-| `maigret` | `pip install --user maigret` | `pip install --user maigret` | use WSL 2 ↴ |
-| `gobuster` | `sudo apt install gobuster` (or `go install github.com/OJ/gobuster/v3@latest`) | `brew install gobuster` | use WSL 2 ↴ |
+| `dnsrecon` | `git clone https://github.com/darkoperator/dnsrecon && cd dnsrecon && pip install --user --break-system-packages .` | same (needs Python **≥ 3.12**) | use WSL 2 ↴ |
+| `sublist3r` | `git clone https://github.com/aboul3la/Sublist3r && cd Sublist3r && pip install --user --break-system-packages .` | same (needs Python ≥ 3.8) | use WSL 2 ↴ |
+| `theHarvester` | `curl -LsSf https://astral.sh/uv/install.sh \| sh` then `git clone https://github.com/laramies/theHarvester && cd theHarvester && uv sync` then `ln -s "$PWD/.venv/bin/theHarvester" "$HOME/.local/bin/theHarvester"` | same (uv manages Python ≥ 3.12 automatically) | use WSL 2 ↴ |
+| `maigret` | `pip install --user --break-system-packages maigret` | same (needs Python ≥ 3.8) | use WSL 2 ↴ |
+| `gobuster` | download a prebuilt from [GitHub releases](https://github.com/OJ/gobuster/releases) (`gobuster_Linux_x86_64.tar.gz`), or `go install github.com/OJ/gobuster/v3@latest` | `brew install gobuster` | use WSL 2 ↴ |
 | `traceroute` | `sudo apt install traceroute` | built-in | `tracert` on Windows |
 | `openssl` | `sudo apt install openssl` | built-in (LibreSSL) · `brew install openssl` for full OpenSSL | use WSL 2 or Git-for-Windows' OpenSSL |
 | `curl` | `sudo apt install curl` | built-in | built-in (10+) |
@@ -117,6 +146,19 @@ running portal with every workbench unlocked.
 | `sherlock` | `pip install --user sherlock-project` | same (needs Python 3.8+) | use WSL 2 ↴ |
 | `python3` | `sudo apt install python3` | `brew install python3` | `winget install Python.Python.3` |
 | wordlists | `sudo apt install seclists` (used by gobuster) | `brew install seclists` | use WSL 2 ↴ |
+
+> **PEP 668.** Debian 12+ / Ubuntu 23.04+ (and Homebrew-managed Python) refuse
+> `pip install --user` by default. Pass `--break-system-packages` (adds to your
+> user site only — the portal's `~/.local/bin`), or use `uv`/`pipx`.
+>
+> **Avoid the PyPI placeholders.** `pip install theHarvester` / `sublist3r` /
+> `dnsrecon` pulls unofficial repacks (e.g. `theHarvester 0.0.1` has no CLI at
+> all). Install those three from their official GitHub repos as shown above.
+> `maigret` and `sherlock-project` are legit on PyPI.
+>
+> **`masscan` needs root** (raw sockets): run `sudo masscan …`. The portal
+> detects the binary either way, but scans will only run with privileges.
+> `gobuster` needs a wordlist on disk or `seclists`.
 
 > **Windows tip.** The portal runs natively on Windows, but most OSINT binaries
 > (`dig`, `whois`, `traceroute`, and the pip/Go tooling) are Unix-native. For
@@ -130,29 +172,50 @@ running portal with every workbench unlocked.
 ```bash
 # 1. Node.js 22 LTS (via NodeSource) + core tools + wordlists
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt install -y nodejs git python3 python3-pip \
-  nmap netcat-openbsd dnsutils whois traceroute openssl curl jq \
-  masscan gobuster seclists
+sudo apt install -y nodejs git python3 python3-pip netcat-openbsd \
+  dnsutils whois traceroute openssl curl jq nmap masscan seclists \
+  libpcap-dev          # libpcap-dev is only needed to build masscan from source
 
-# 2. Sherlock + the Python toolchain (username & OSINT collectors)
-pip install --user sherlock-project dnsrecon sublist3r theHarvester maigret
+# 2. Username collectors (official PyPI packages)
+pip install --user --break-system-packages sherlock-project maigret
 export PATH="$HOME/.local/bin:$PATH"
 
-# 3. Get the source
+# 3. DNS/subdomain/email collectors (official GitHub repos — NOT the PyPI placeholders)
+git clone https://github.com/darkoperator/dnsrecon
+cd dnsrecon && pip install --user --break-system-packages . && cd ..
+git clone https://github.com/aboul3la/Sublist3r
+cd Sublist3r && pip install --user --break-system-packages . && cd ..
+
+# 4. theHarvester — needs Python ≥ 3.12; uv fetches it automatically
+curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+git clone https://github.com/laramies/theHarvester
+cd theHarvester && uv sync
+ln -s "$PWD/.venv/bin/theHarvester" "$HOME/.local/bin/theHarvester" && cd ..
+
+# 5. gobuster — prebuilt binary from GitHub releases (no Go needed)
+curl -L -o /tmp/gobuster.tar.gz \
+  https://github.com/OJ/gobuster/releases/download/v3.8.2/gobuster_Linux_x86_64.tar.gz
+tar xzf /tmp/gobuster.tar.gz -C "$HOME/.local/bin" gobuster
+chmod +x "$HOME/.local/bin/gobuster"
+
+# 6. Get the source
 git clone https://github.com/arcnosixta/osint-portal.git
 cd osint-portal
 
-# 4. Install dependencies
+# 7. Install dependencies
 npm install
-
-# 5. Environment (optional — defaults are safe)
 cp .env.example .env.local
 
-# 6. Verify tools are detected, then start
-node -e "console.log('node', process.version)"
-npm test          # unit tests for segment parsers
+# 8. Verify tools are detected, then start
+npm test          # unit tests for segment parsers and the graph API
 npm run dev       # → http://localhost:3000
 ```
+
+> On Fedora/RHEL swap `apt` for `dnf` and the packages are: `nmap` `ncat`
+> `bind-utils` `whois` `traceroute` `openssl` `curl` `jq` `masscan`
+> `python3-pip`. The Python collectors (sherlock, maigret, dnsrecon,
+> Sublist3r, theHarvester) and gobuster install exactly as in the guide above.
 
 > On Fedora/RHEL swap `apt` for `dnf` and the packages are: `nmap` `ncat`
 > `bind-utils` `whois` `traceroute` `openssl` `curl` `jq`.
@@ -167,17 +230,30 @@ npm run dev       # → http://localhost:3000
 brew install node@22 git python3 nmap netcat whois \
   openssl jq traceroute masscan gobuster seclists
 
-# 3. Sherlock + Python collectors
-python3 -m pip install --user sherlock-project dnsrecon sublist3r theHarvester maigret
-export PATH="$HOME/Library/Python/3.13/bin:$PATH"   # or: "$HOME/.local/bin"
+# 3. Username collectors
+python3 -m pip install --user --break-system-packages sherlock-project maigret
+export PATH="$HOME/.local/bin:$PATH"          # Homebrew Python… or "$HOME/Library/Python/3.13/bin"
 
-# 4. Source + install
+# 4. DNS/subdomain/email collectors from official repos
+git clone https://github.com/darkoperator/dnsrecon
+cd dnsrecon && python3 -m pip install --user --break-system-packages . && cd ..
+git clone https://github.com/aboul3la/Sublist3r
+cd Sublist3r && python3 -m pip install --user --break-system-packages . && cd ..
+
+# 5. theHarvester via uv (uv manages its own Python ≥ 3.12)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+git clone https://github.com/laramies/theHarvester
+cd theHarvester && uv sync
+ln -s "$PWD/.venv/bin/theHarvester" "$HOME/.local/bin/theHarvester" && cd ..
+
+# 6. Source + install
 git clone https://github.com/arcnosixta/osint-portal.git
 cd osint-portal
 npm install
 cp .env.example .env.local
 
-# 5. Verify + run
+# 7. Verify + run
 npm test
 npm run dev       # → http://localhost:3000
 ```
@@ -281,12 +357,49 @@ curl -X POST http://localhost:3000/api/tools/jq \
 
 # Health
 curl http://localhost:3000/api/health
+
+# Evidence store — every successful run lands here
+curl http://localhost:3000/api/evidence
+
+# Correlated entity graph built from the evidence (nodes + links)
+curl http://localhost:3000/api/graph
+
+# Wipe evidence (also clears the local graph cache)
+curl -X DELETE http://localhost:3000/api/evidence
 ```
 
 By default only loopback/private targets are allowed; extend with
 `OSINT_ALLOWED_TARGETS` (see [`.env.example`](./.env.example)). Raw IP/CIDR
 targets are always gated; read-only DNS/registry segments (dig, host, whois)
 accept public hostname targets.
+
+### Entity graph (`/graph`)
+
+Open `/graph` to see everything you've collected as one living map: usernames,
+domains, hosts, IPs, emails and ports become colored nodes; edges carry the
+kind of relation (`profile`, `resolution`, `port`, `service`, `subdomain` …).
+
+Behavior worth knowing:
+
+- **Nodes don't wander** — physics runs only to settle the initial layout and
+  while you actively drag a node; otherwise the canvas is static. Pan/zoom
+  never stir the layout. With `prefers-reduced-motion` nothing moves at all.
+- **Layout survives reloads** — positions are saved to
+  `localStorage["osint-portal-graph-layout"]` and restored next visit.
+- **Server-first, local fallback** — the page uses `/api/graph` when it has
+  data; if the store is empty or offline it shows the last cached snapshot
+  from `localStorage["osint-portal-graph"]` with a **local cache** badge.
+- **Everything is stale-safe** — clearing evidence (`× Ajax`-free Trash button
+  or `DELETE /api/evidence`) also drops both local keys.
+
+UI keys the app persists (`osint-portal-*` prefix):
+
+| Key | Holds |
+|---|---|
+| `osint-portal-lang` | chosen UI language (`en` / `ru`) |
+| `osint-portal-workbench-history` | last 8 runs per shared history |
+| `osint-portal-graph` | last graph payload snapshot (local fallback) |
+| `osint-portal-graph-layout` | node positions for a stable, static layout |
 
 ### Environment variables
 
@@ -388,7 +501,7 @@ See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the detailed contract.
 
 ## Roadmap
 
-- [ ] Graph visualization / evidence store (Flowsint module)
+- [x] Entity graph visualization / evidence store (`/graph`, `/api/evidence`)
 - [ ] Reproducible reports
 - [ ] Expand the catalog beyond the current 18 tools
 - [ ] GitHub Actions CI

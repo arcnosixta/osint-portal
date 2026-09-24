@@ -71,10 +71,17 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* graph link */}
+          <Link
+            href="/graph"
+            className="cursor-pointer rounded px-3 py-2 font-mono text-[13px] text-muted-foreground transition-colors duration-200 hover:bg-primary/10 hover:text-primary"
+          >
+            {dict.nav.graph}
+          </Link>
           {/* language toggle */}
           <div
             role="group"
-            aria-label="Language"
+            aria-label={dict.nav.ariaLang}
             className="flex items-center rounded-lg border border-border bg-black/50 p-0.5 font-mono text-xs"
           >
             {(["en", "ru"] as const).map((locale) => (

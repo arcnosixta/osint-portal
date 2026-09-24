@@ -11,13 +11,15 @@ interface TerminalLine {
 interface TerminalProps {
   prompt: string;
   lines: TerminalLine[];
+  title: string;
+  done: string;
 }
 
 const TYPE_SPEED = 34;
 const PAUSE_AFTER_CMD = 320;
 const PAUSE_AFTER_OUT = 1100;
 
-export default function Terminal({ prompt, lines }: TerminalProps) {
+export default function Terminal({ prompt, lines, title, done }: TerminalProps) {
   const prefersReduced = usePrefersReducedMotion();
   const [rendered, setRendered] = useState<TerminalLine[]>([]);
   const [currentCmd, setCurrentCmd] = useState("");
@@ -97,7 +99,7 @@ export default function Terminal({ prompt, lines }: TerminalProps) {
         <span className="h-3 w-3 rounded-full bg-[#fbbf24]/80" />
         <span className="h-3 w-3 rounded-full bg-primary/80" />
         <span className="ml-3 font-mono text-xs text-muted-foreground">
-          osint-portal — orchestrator
+          {title}
         </span>
       </div>
 
@@ -128,7 +130,7 @@ export default function Terminal({ prompt, lines }: TerminalProps) {
 
         {showFinished && (
           <p className="mb-1 text-primary/80">
-            ▸ pipeline complete <span className="cursor-blink">▍</span>
+            {done} <span className="cursor-blink">▍</span>
           </p>
         )}
       </div>

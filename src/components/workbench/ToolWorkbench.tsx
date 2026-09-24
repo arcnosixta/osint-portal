@@ -45,7 +45,7 @@ interface RunResponse {
 }
 
 interface HistoryItem {
-  id: number;
+  id: string;
   command: string;
   status: string;
   durationMs: number;
@@ -164,12 +164,22 @@ export default function ToolWorkbench({
     try {
       const raw = window.localStorage.getItem(HISTORY_KEY);
       if (raw) {
+        const fallback = (i: number) => `${tool.id}-${Date.now().toString(36)}-${i}`;
+        const seen = new Set<string>();
+        const next = (JSON.parse(raw) as HistoryItem[]).map((it, i) => {
+          let id = typeof it.id === "string" && it.id.length > 0 ? it.id : null;
+          if (id && seen.has(id)) id = null;
+          if (!id) id = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : fallback(i);
+          seen.add(id);
+          return { ...it, id };
+        });
         // eslint-disable-next-line react-hooks/set-state-in-effect -- documented hydration pattern: must not differ between server and first client render
-        setHistory(JSON.parse(raw) as HistoryItem[]);
+        setHistory(next);
       }
     } catch {
       /* ignore */
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hydration effect must run once; tool.id only seeds the fallback id
   }, []);
 
   // autoscroll console
@@ -263,7 +273,11 @@ export default function ToolWorkbench({
       setLog((prev) => [...prev, ...lines]);
       setResult(json);
       setHistory((prev) => {
-        const next = [{ id, command, status: RESULT_LABEL[status], durationMs: json.durationMs, response: json }, ...prev].slice(0, 8);
+        const itemId =
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `${tool.id}-${Date.now().toString(36)}-${id}`;
+        const next = [{ id: itemId, command, status: RESULT_LABEL[status], durationMs: json.durationMs, response: json }, ...prev].slice(0, 8);
         try {
           window.localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
         } catch {
@@ -582,7 +596,7 @@ export default function ToolWorkbench({
                               : "bg-accent",
                         )}
                       />
-                      {RESULT_LABEL[resultStatus]}
+                      {resultStatus === "ok" ? t.statusOk : resultStatus === "blocked" ? t.statusBlocked : t.statusError}
                     </span>
                     {result.durationMs != null && (
                       <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -833,7 +847,11 @@ export default function ToolWorkbench({
                         STATUS_STYLES[r.status],
                       )}
                     >
-                      {r.status}
+                      {r.status === "online"
+                        ? dict.tools.statusOnline
+                        : r.status === "module"
+                          ? dict.tools.statusModule
+                          : dict.tools.statusPlanned}
                     </span>
                   </div>
                   <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">

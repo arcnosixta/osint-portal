@@ -1,6 +1,7 @@
 import { getToolById, type Tool } from "./tools";
 import { isBinaryAvailable } from "./binary";
 import { SEGMENTS, isSegmentConnected } from "./segments";
+import { recordEvidence } from "./evidence";
 
 /**
  * Execution seam for the OSINT toolkit.
@@ -98,7 +99,7 @@ export async function runTool(req: ToolRequest): Promise<ToolRunResult> {
       target: req.target,
       args: req.args ?? [],
     });
-    return {
+    const result: ToolRunResult = {
       ...base,
       connected: true,
       local: tool.local,
@@ -106,6 +107,18 @@ export async function runTool(req: ToolRequest): Promise<ToolRunResult> {
       durationMs: Date.now() - started,
       ...segmentResult,
     };
+    if (result.status === "ok" && req.target) {
+      recordEvidence({
+        tool: tool.id,
+        target: req.target,
+        command: `$ ${tool.command}`,
+        status: "ok",
+        message: result.message,
+        at: new Date().toISOString(),
+        data: result.data,
+      });
+    }
+    return result;
   }
 
   return {

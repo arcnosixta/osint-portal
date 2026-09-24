@@ -146,7 +146,7 @@ export default function Hero() {
         {/* Terminal */}
         <div data-hero-terminal className="relative">
           <div className="hud-corner absolute -inset-3 z-0" aria-hidden="true" />
-          <Terminal prompt={dict.hero.terminalPrompt} lines={dict.hero.terminalLines} />
+          <Terminal prompt={dict.hero.terminalPrompt} lines={dict.hero.terminalLines} title={dict.hero.terminalTitle} done={dict.hero.terminalDone} />
         </div>
       </div>
 
@@ -156,7 +156,7 @@ export default function Hero() {
           href="#metrics"
           data-hero-anim
           className="flex cursor-pointer flex-col items-center gap-2 font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground transition-colors hover:text-primary"
-          aria-label="Scroll"
+          aria-label={dict.hero.ariaScroll}
         >
           <span>▼</span>
           <span className="h-10 w-px bg-gradient-to-b from-primary to-transparent" />
