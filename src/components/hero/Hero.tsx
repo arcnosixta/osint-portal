@@ -67,6 +67,7 @@ export default function Hero() {
 
   return (
     <section
+      id="hero"
       ref={rootRef}
       className="relative flex min-h-[100svh] flex-col overflow-hidden pt-28 pb-16"
     >
