@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { detectLocalToolStatus, isBinaryAvailable } from "@/lib/executor";
+import { detectLocalToolStatus, isBinaryAvailable } from "@/lib/binary";
 import { TOOLS } from "@/lib/tools";
 
 export const dynamic = "force-dynamic";

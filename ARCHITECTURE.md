@@ -30,6 +30,14 @@ through a single, stable seam instead of touching the whole platform.
 │  • validates id against catalog                             │
 │  • rejects shell metacharacters in args (/[;&|`$<>(){}\n\r]/)│
 │  • probes local availability with `which` (cached)          │
+│  • routes wired segments via src/lib/segments               │
+│ Segments (src/lib/segments)                                 │
+│  • index.ts       → SEGMENTS registry, isSegmentConnected   │
+│  • spawn.ts       → shell-free runner, timeout + cap        │
+│  • nmap.ts        → reference segment                       │
+│ Allow-list (src/lib/security/allowlist.ts)                  │
+│  • CIDR/IPv6/domain matcher, defaults private+loopback      │
+│  • env OSINT_ALLOWED_TARGETS extends it                     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -46,13 +54,18 @@ interface ToolRequest {
 
 interface ToolRunResult {
   tool: string;
-  connected: boolean;  // false until a real segment is wired
+  connected: boolean;  // false for unwired/misconfigured tools
   message: string;
   durationMs: number;
   startedAt: string;
   local?: boolean;
   available?: boolean;
   excerpt?: string;
+  status?: "ok" | "error" | "blocked";
+  blocked?: boolean;   // 403 at the route layer
+  data?: unknown;      // structured segment output (e.g. nmap: ports, os)
+  stdout?: string;     // capped raw output
+  exitCode?: number | null;
 }
 ```
 
@@ -64,16 +77,22 @@ API all read the same catalog, so a single PR wires a tool into everything.
 
 Segments are the only place a process is ever spawned. Enforced now:
 
+- **Target allow-list.** `src/lib/security/allowlist.ts` checks every target
+  against CIDR/IPv6/domain rules; defaults cover loopback + private ranges, and
+  `OSINT_ALLOWED_TARGETS` extends it. Restricted targets → `403`.
+- **Argument allow-lists per tool.** The nmap segment forwards only whitelisted
+  flags/values; output-redirect, script-loading and input-file flags are
+  rejected up front.
 - Shell metacharacters are rejected before any executor runs.
 - Tool ids must match `/^[a-z0-9-_.]+$/i`.
+- Every run has a hard timeout (`OSINT_RUN_TIMEOUT_MS`, default 20s) and an
+  output cap (`OSINT_MAX_OUTPUT_BYTES`, default 64KB) enforced in `spawn.ts`.
 - Route handlers are all `force-dynamic` (never prerendered/static).
 
-Coming as segments land (see `SECURITY.md`):
+## Testing
 
-- Explicit target allow-lists (owned/authorized CIDRs & domains) from `.env`.
-- Timeouts and output-size caps per tool.
-- Argument allow-lists instead of a block-list where possible.
-- Structured, auditable run logs.
+`npm test` runs `src/lib/**/*.test.ts` with the node test runner (via `tsx`):
+allow-list semantics, nmap argument validation and nmap output parsing.
 
 ## Bilingual UI
 

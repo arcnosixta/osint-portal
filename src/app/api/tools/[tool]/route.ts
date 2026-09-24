@@ -31,11 +31,17 @@ export async function POST(
   };
 
   const result = await runTool(req);
+  if (result.blocked) {
+    return NextResponse.json({ ok: false, ...result }, { status: 403 });
+  }
   return NextResponse.json({ ok: result.connected, ...result });
 }
 
 export async function GET(_request: NextRequest, ctx: RouteContext<"/api/tools/[tool]">) {
   const { tool } = await ctx.params;
   const result = await runTool({ tool });
+  if (result.blocked) {
+    return NextResponse.json({ ok: false, ...result }, { status: 403 });
+  }
   return NextResponse.json({ ok: result.connected, ...result });
 }

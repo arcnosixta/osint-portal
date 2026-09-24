@@ -34,7 +34,10 @@ collectors, correlates the results into a graph, and produces a report.
       Collect → Correlate → Analyze → Visualize → Report.
 - [x] **API skeleton** — safe seams (`/api/tools/*`) for tool execution with
       built-in shell-metacharacter filtering.
-- [ ] **Segments** — wiring real execution for each tool (one pull request per tool).
+- [x] **nmap segment (reference)** — live execution behind a target allow-list
+      and per-flag argument validation, with timeout/output caps, structured
+      parsing (`data.ports`, `data.os`) and 11 unit tests.
+- [ ] **More segments** — wiring real execution one pull request per tool.
 - [ ] **Workbench** — visual command center that drives the pipeline.
 
 ## Tech stack
@@ -68,14 +71,20 @@ npm run build && npm run start
 # Catalog + local binary detection
 curl http://localhost:3000/api/tools
 
-# Run a tool (segment wiring lands one-by-one)
+# Run a tool — nmap segment is live (allow-listed targets only)
 curl -X POST http://localhost:3000/api/tools/nmap \
   -H 'Content-Type: application/json' \
-  -d '{"target":"10.0.0.7"}'
+  -d '{"target":"127.0.0.1","args":["-p","80,443"]}'
+
+# Run the tests
+npm test
 
 # Health
 curl http://localhost:3000/api/health
 ```
+
+By default only loopback/private targets are allowed; extend with
+`OSINT_ALLOWED_TARGETS` (see [`.env.example`](./.env.example)).
 
 ## Responsible use
 
