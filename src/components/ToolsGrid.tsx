@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Link from "next/link";
 import {
   ArrowUpRight,
   Database,
@@ -202,8 +203,10 @@ function ToolCard({ tool }: { tool: Tool }) {
   const Icon = CATEGORY_ICON[tool.category];
 
   return (
-    <article
+    <Link
+      href={`/tools/${tool.id}`}
       data-tool-card
+      aria-label={`${tool.name} — open workbench`}
       className={cn(
         "group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card p-5 transition-[border-color,box-shadow] duration-200 will-change-transform",
         "hover:border-primary/60 hover:shadow-[0_0_30px_rgba(0,255,65,0.12)]",
@@ -272,6 +275,6 @@ function ToolCard({ tool }: { tool: Tool }) {
         className="absolute bottom-4 right-4 h-4 w-4 text-primary opacity-0 transition-opacity duration-200 group-hover:opacity-100"
         aria-hidden="true"
       />
-    </article>
+    </Link>
   );
 }

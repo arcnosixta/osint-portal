@@ -4,6 +4,7 @@ import { runDigSegment } from "./dig";
 import { runHostSegment } from "./host";
 import { runWhoisSegment } from "./whois";
 import { runSherlockSegment } from "./sherlock";
+import { runCurlSegment } from "./curl";
 
 /** Shape of a run request as seen by segment runners. */
 export interface SegmentRequest {
@@ -28,6 +29,7 @@ export const SEGMENTS: Record<string, SegmentRunner> = {
   host: (req) => runHostSegment(req.target, req.args ?? []),
   whois: (req) => runWhoisSegment(req.target, req.args ?? []),
   sherlock: (req) => runSherlockSegment(req.target, req.args ?? []),
+  curl: (req) => runCurlSegment(req.target, req.args ?? []),
 };
 
 export function isSegmentConnected(toolId: string): boolean {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +40,7 @@ export default function Navbar() {
       />
 
       <nav className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6 sm:px-10">
-        <a href="#top" className="group flex cursor-pointer items-center gap-3">
+        <Link href="/" className="group flex cursor-pointer items-center gap-3">
           <span className="flex h-8 w-8 items-center justify-center rounded-md border border-primary/60 bg-primary/10 font-mono text-sm font-bold text-primary transition-all duration-200 group-hover:shadow-[0_0_18px_rgba(0,255,65,0.5)]">
             &gt;_
           </span>
@@ -49,23 +50,23 @@ export default function Navbar() {
           <span className="mt-0.5 hidden rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline-block">
             {dict.nav.version}
           </span>
-        </a>
+        </Link>
 
         <div className="hidden items-center gap-1 md:flex">
           {(
             [
-              ["#tools", dict.nav.tools],
-              ["#pipeline", dict.nav.pipeline],
-              ["#ethics", dict.nav.ethics],
+              ["/#tools", dict.nav.tools],
+              ["/#pipeline", dict.nav.pipeline],
+              ["/#ethics", dict.nav.ethics],
             ] as const
           ).map(([href, label]) => (
-            <a
+            <Link
               key={href}
               href={href}
               className="cursor-pointer rounded px-3 py-2 font-mono text-[13px] text-muted-foreground transition-colors duration-200 hover:bg-primary/10 hover:text-primary"
             >
               {label}
-            </a>
+            </Link>
           ))}
         </div>
 
