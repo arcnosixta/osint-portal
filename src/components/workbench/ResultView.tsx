@@ -39,6 +39,28 @@ interface WhoisData {
   raw?: string;
 }
 
+interface CertData {
+  host?: string;
+  port?: number;
+  connected?: boolean;
+  protocol?: string;
+  cipher?: string;
+  verify?: string;
+  subject?: string;
+  issuer?: string;
+  serial?: string;
+  notBefore?: string;
+  notAfter?: string;
+  san?: string[];
+  fingerprint?: string;
+}
+
+interface HopRow {
+  n?: number;
+  ip?: string;
+  rtt?: string[];
+}
+
 function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
 }
@@ -193,6 +215,88 @@ export default function ResultView({
             </pre>
           </details>
         ) : null}
+      </div>
+    );
+  }
+
+  if (view === "cert") {
+    const c = data as CertData | undefined;
+    if (!c?.subject) return <PlainNote text={t.noRows} />;
+    const fields: { label: string; value: string }[] = [
+      { label: t.subject, value: c.subject ?? "—" },
+      { label: t.issuer, value: c.issuer ?? "—" },
+      { label: t.serial, value: c.serial ?? "—" },
+      { label: t.notBefore, value: c.notBefore ?? "—" },
+      { label: t.notAfter, value: c.notAfter ?? "—" },
+      { label: t.fingerprint, value: c.fingerprint ?? "—" },
+      { label: t.san, value: (c.san ?? []).join(", ") || "—" },
+    ];
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {(c.protocol || c.cipher || c.verify) && (
+            <>
+              {c.protocol && (
+                <span className="rounded border border-primary/40 bg-primary/10 px-2 py-1 font-mono text-[11px] text-primary">
+                  {c.protocol}
+                </span>
+              )}
+              {c.cipher && (
+                <span className="rounded border border-border px-2 py-1 font-mono text-[11px] text-muted-foreground">
+                  {c.cipher}
+                </span>
+              )}
+              {c.verify && (
+                <span
+                  className={
+                    c.verify === "ok"
+                      ? "rounded border border-border px-2 py-1 font-mono text-[11px] text-muted-foreground"
+                      : "rounded border border-red-500/50 bg-red-500/10 px-2 py-1 font-mono text-[11px] text-red-400"
+                  }
+                >
+                  {t.verify}: {c.verify}
+                </span>
+              )}
+            </>
+          )}
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {fields.map((f) => (
+            <div key={f.label} className="rounded-lg border border-border bg-card/50 px-4 py-3">
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                {f.label}
+              </p>
+              <p className="mt-1.5 break-words font-mono text-[13px] text-foreground/90">{f.value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (view === "hops") {
+    const hops = asArray<HopRow>((data as { hops?: unknown })?.hops);
+    if (hops.length === 0) return <PlainNote text={t.noRows} />;
+    return (
+      <div className="overflow-hidden rounded-lg border border-border">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              <Th>{t.hop}</Th>
+              <Th>{t.ip}</Th>
+              <Th>{t.rtt}</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {hops.map((h, i) => (
+              <tr key={i} className="transition-colors hover:bg-card/60">
+                <Td>{h.n ?? "—"}</Td>
+                <Td tone={h.ip === "*" ? "muted" : undefined}>{h.ip ?? "—"}</Td>
+                <Td tone="muted">{(h.rtt ?? []).join("  ") || "—"}</Td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     );
   }

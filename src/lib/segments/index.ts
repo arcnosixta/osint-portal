@@ -5,6 +5,9 @@ import { runHostSegment } from "./host";
 import { runWhoisSegment } from "./whois";
 import { runSherlockSegment } from "./sherlock";
 import { runCurlSegment } from "./curl";
+import { runOpensslSegment } from "./openssl";
+import { runTracerouteSegment } from "./traceroute";
+import { runJqSegment } from "./jq";
 
 /** Shape of a run request as seen by segment runners. */
 export interface SegmentRequest {
@@ -30,6 +33,9 @@ export const SEGMENTS: Record<string, SegmentRunner> = {
   whois: (req) => runWhoisSegment(req.target, req.args ?? []),
   sherlock: (req) => runSherlockSegment(req.target, req.args ?? []),
   curl: (req) => runCurlSegment(req.target, req.args ?? []),
+  openssl: (req) => runOpensslSegment(req.target, req.args ?? []),
+  traceroute: (req) => runTracerouteSegment(req.target, req.args ?? []),
+  jq: (req) => runJqSegment(req.target, req.args ?? []),
 };
 
 export function isSegmentConnected(toolId: string): boolean {

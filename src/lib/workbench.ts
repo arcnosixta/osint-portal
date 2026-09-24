@@ -14,7 +14,7 @@ import type { Tool } from "./tools";
 
 export type TargetKind = "network" | "hostname" | "username";
 
-export type ResultView = "ports" | "records" | "found" | "whois" | "plain";
+export type ResultView = "ports" | "records" | "found" | "whois" | "cert" | "hops" | "plain";
 
 export interface Bilingual {
   en: string;
@@ -223,6 +223,59 @@ export const WORKBENCHES: Partial<Record<string, WorkbenchProfile>> = {
       { id: "i", label: { en: "-I", ru: "-I" }, args: ["-I"] },
       { id: "s", label: { en: "-s", ru: "-s" }, args: ["-s"] },
       { id: "l", label: { en: "-L", ru: "-L" }, args: ["-L"] },
+    ],
+  },
+
+  openssl: {
+    runner: "openssl",
+    targetKind: "hostname",
+    targetPlaceholder: { en: "host or host:port", ru: "хост или хост:порт" },
+    resultView: "cert",
+    wired: true,
+    presets: [
+      { id: "cert", label: { en: "Grab certificate", ru: "Снять сертификат" }, target: "example.com:443", args: [] },
+      { id: "tls12", label: { en: "Force TLS 1.2", ru: "TLS 1.2 принудительно" }, target: "example.com:443", args: ["-tls1_2"] },
+      { id: "tls13", label: { en: "Force TLS 1.3", ru: "TLS 1.3 принудительно" }, target: "example.com:443", args: ["-tls1_3"] },
+    ],
+    chips: [
+      { id: "tls13", label: { en: "-tls1_3", ru: "-tls1_3" }, args: ["-tls1_3"] },
+      { id: "tls12", label: { en: "-tls1_2", ru: "-tls1_2" }, args: ["-tls1_2"] },
+    ],
+  },
+
+  traceroute: {
+    runner: "traceroute",
+    targetKind: "network",
+    targetPlaceholder: { en: "hostname or IP", ru: "хост или IP" },
+    resultView: "hops",
+    wired: true,
+    presets: [
+      { id: "path", label: { en: "Full path", ru: "Полный путь" }, target: "example.com", args: ["-m", "30"] },
+      { id: "icmp", label: { en: "ICMP probes", ru: "ICMP-пробы" }, target: "example.com", args: ["-I", "-m", "15"] },
+      { id: "fast", label: { en: "Fast sample", ru: "Быстрая проба" }, target: "example.com", args: ["-q", "1"] },
+    ],
+    chips: [
+      { id: "n", label: { en: "-n no-DNS", ru: "-n без DNS" }, args: ["-n"] },
+      { id: "i", label: { en: "-I ICMP", ru: "-I ICMP" }, args: ["-I"] },
+      { id: "m15", label: { en: "-m 15", ru: "-m 15" }, args: ["-m", "15"] },
+      { id: "w1", label: { en: "-w 1", ru: "-w 1" }, args: ["-w", "1"] },
+    ],
+  },
+
+  jq: {
+    runner: "jq",
+    targetKind: "hostname",
+    targetPlaceholder: { en: "http(s) URL returning JSON", ru: "http(s) URL с JSON" },
+    resultView: "plain",
+    wired: true,
+    presets: [
+      { id: "health", label: { en: "Health field", ru: "Поле health" }, target: "http://localhost:3000/api/health", args: [".service"] },
+      { id: "count", label: { en: "Catalog count", ru: "Число модулей" }, target: "http://localhost:3000/api/tools", args: [".count"] },
+      { id: "ids", label: { en: "Tool ids", ru: "Id инструментов" }, target: "http://localhost:3000/api/tools", args: [".tools[0].name"] },
+    ],
+    chips: [
+      { id: "dot", label: { en: ". identity", ru: ". как есть" }, args: ["."] },
+      { id: "first", label: { en: "[0] first", ru: "[0] первый" }, args: ["[0]"] },
     ],
   },
 };
