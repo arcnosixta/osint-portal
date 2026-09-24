@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { detectEmotion } from "./emotion";
 import { buildSystemPrompt, capHistory } from "./prompt";
 import { matchTool, fallbackReply } from "./fallback";
+import { anyaMark } from "./face";
 import { runAnya, type AnyaDeps } from "./index";
 import type { AnyaRequest } from "./types";
 
@@ -31,6 +32,23 @@ test("detectEmotion: questions map to think", () => {
   assert.equal(detectEmotion("как использовать nmap?"), "think");
   assert.equal(detectEmotion("why is this failing?"), "think");
   assert.equal(detectEmotion("просто текст без эмоций"), "neutral");
+});
+
+test("detectEmotion: bye and hope", () => {
+  assert.equal(detectEmotion("пока Аня"), "bye");
+  assert.equal(detectEmotion("goodbye!"), "bye");
+  assert.equal(detectEmotion("надеюсь, всё получится"), "hope");
+  assert.equal(detectEmotion("good luck, Anya"), "hope");
+});
+
+test("anyaMark: photo mapping follows emotion and mode", () => {
+  assert.equal(anyaMark("neutral", "idle"), "neutral");
+  assert.equal(anyaMark("bye", "idle"), "bye");
+  assert.equal(anyaMark("angry", "idle"), "angry");
+  assert.equal(anyaMark("happy", "idle"), "happy");
+  assert.equal(anyaMark("surprised", "idle"), "happy");
+  assert.equal(anyaMark("hope", "idle"), "hope");
+  assert.equal(anyaMark("neutral", "thinking"), "thinking");
 });
 
 test("buildSystemPrompt: persona knows her name and speaks the language", () => {

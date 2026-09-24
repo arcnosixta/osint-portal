@@ -170,6 +170,9 @@ export const en = {
     send: "send",
     clear: "clear",
     thinking: "Anya is thinking…",
+    expand: "open full-screen chat",
+    backToHome: "back home",
+    pageTitle: "AI chat · full screen",
     provider: "model",
     localNote:
       "No AI backend is connected yet — Anya answers from a built-in offline brain. Set ANYA_OLLAMA_URL, ANYA_GROQ_API_KEY or ANYA_OPENROUTER_API_KEY in .env.local to unlock real answers.",

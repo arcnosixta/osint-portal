@@ -261,7 +261,8 @@ Copy `.env.example` to `.env.local` to override.
 
 ### Anya — the AI assistant
 
-Anya lives in the bottom-right corner of every page:
+Anya lives in the bottom-right corner of every page (except the full-screen
+`/anya` chat, where the widget hides itself):
 
 ```bash
 # Chat with Anya
@@ -284,6 +285,24 @@ curl http://localhost:3000/api/anya
 
 With no backend configured Anya stays online using her built-in offline brain —
 and tells you how to upgrade her.
+
+**Full-screen pink chat:** open `/anya` (link in the widget header) for a
+dedicated page where her mood slowly cross-fades the backdrop photo.
+
+**Photos (emotions):** push your own into `public/anya/` — the code reads exactly
+these names and never renames them:
+
+| File | Used for |
+|---|---|
+| `public/anya/anya.png` | neutral / default portrait |
+| `public/anya/thinking_anya.png` | she's thinking (waiting for a reply) |
+| `public/anya/zlaia_anya.png` | angry (your message made her mad) |
+| `public/anya/happy_anya.png` | happy (celebrating with you) |
+| `public/anya/hope_anya.png` | hoping (wishes you luck) |
+| `public/anya/bye_anya.png` | goodbye (saying farewell) |
+
+Missing photos fall back to the procedural SVG avatar, so nothing breaks before
+you push the images.
 
 ---
 

@@ -35,6 +35,12 @@ export function fallbackReply(
   const tool = matchTool(userText);
   const t = userText.toLowerCase();
 
+  if (emotion === "bye") {
+    return language === "ru"
+      ? "До встречи! Возвращайся — я всегда тут, в углу экрана. 🖐"
+      : "See you soon! I'll be right here in the corner of your screen. 🖐";
+  }
+
   if (tool) {
     return language === "ru"
       ? `Отличный выбор — модуль \`${tool}\` живой и привязан к локальному бинарнику. Открой его воркбенч через карточку инструмента (раздел Tools), укажи цель и нажми Run. Я подскажу, какие флаги безопасно использовать.`

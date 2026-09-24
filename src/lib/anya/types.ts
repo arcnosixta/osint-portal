@@ -11,7 +11,9 @@ export type AnyaEmotion =
   | "sad"
   | "surprised"
   | "angry"
-  | "think";
+  | "think"
+  | "hope"
+  | "bye";
 
 export type AnyaLanguage = "en" | "ru";
 

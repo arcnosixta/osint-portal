@@ -326,6 +326,74 @@ body {
   animation-delay: 0.36s;
 }
 
+/* ---------- Anya photo avatar & backdrop ---------- */
+
+@keyframes anya-bg-pop {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.anya-bg-pop {
+  animation: anya-bg-pop 2.2s ease-in-out forwards;
+}
+
+@keyframes anya-face-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+@keyframes anya-float-photo-kf {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.anya-float-photo {
+  animation: anya-float-photo-kf 4.5s ease-in-out infinite;
+}
+
+.anya-listen-photo {
+  animation: anya-bob 1.9s ease-in-out infinite;
+}
+
+.anya-speaking-face {
+  animation: anya-face-pulse 1.1s ease-in-out infinite;
+}
+
+.anya-mode-caret {
+  animation: cursor-blink 1s step-end infinite;
+}
+
+.type-caret-pink {
+  display: inline-block;
+  width: 0.5em;
+  margin-left: 1px;
+  color: #ff6fb5;
+  animation: cursor-blink 1s step-end infinite;
+}
+
+.anya-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 111, 181, 0.14) 1px, transparent 1px),
+    linear-gradient(to top, rgba(255, 111, 181, 0.14) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 35%, black 40%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 35%, black 40%, transparent 100%);
+}
+
 /* ---------- reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   .grid-floor,

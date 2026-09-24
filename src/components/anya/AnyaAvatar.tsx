@@ -1,6 +1,7 @@
 import type { AnyaEmotion } from "@/lib/anya/types";
+import type { AnyaMode } from "@/lib/anya/face";
 
-export type AnyaMode = "idle" | "listening" | "thinking" | "speaking";
+export type { AnyaMode };
 
 interface AnyaAvatarProps {
   emotion?: AnyaEmotion;

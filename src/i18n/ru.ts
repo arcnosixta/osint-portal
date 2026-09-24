@@ -172,6 +172,9 @@ export const ru: Dictionary = {
     send: "отправить",
     clear: "очистить",
     thinking: "Аня думает…",
+    expand: "открыть полностью",
+    backToHome: "на главную",
+    pageTitle: "ИИ-чат · полноэкранный",
     provider: "модель",
     localNote:
       "К порталу ещё не подключена нейросеть — Аня отвечает из встроенного офлайн-мозга. Пропишите ANYA_OLLAMA_URL, ANYA_GROQ_API_KEY или ANYA_OPENROUTER_API_KEY в .env.local, чтобы получить живые ответы.",

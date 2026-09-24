@@ -12,8 +12,16 @@ const ANGRY =
 const SURPRISE =
   /(?:\u{1F632}|\u{1F62E}|\u{1F62F}|вау|ого|офиг|ух ты|whoa|wow|не может быть|серьёзно|seriously|really\?|как так)/iu;
 
+const BYE =
+  /(?:\u{1F44B}|пока|до свидан|до встреч|прощай|спокойной ночи|бб|ухожу|goodbye|good-bye|see you|farewell)/iu;
+
+const HOPE =
+  /(?:\u{1F91E}|\u{1F4AA}|надеюс|надейся|пожелай|удачи|а вдруг|авось|hope|good luck)/iu;
+
 export function detectEmotion(text: string): AnyaEmotion {
   const t = text.trim();
+  if (BYE.test(t)) return "bye";
+  if (HOPE.test(t)) return "hope";
   const last = t.endsWith("?") ? t.slice(0, -1) : t;
   if (/[а-яёa-z]+\?\s*$|#|как|почему|что|где|кто|какой|зачем|how|why|what|where|which|help/iu.test(last)) {
     return "think";
