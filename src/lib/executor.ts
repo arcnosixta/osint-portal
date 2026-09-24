@@ -54,6 +54,15 @@ function validateRequest(
       startedAt: new Date().toISOString(),
     };
   }
+  if (req.target && META_RE.test(req.target)) {
+    return {
+      tool: tool.id,
+      connected: false,
+      message: "target blocked: shell metacharacters are not allowed.",
+      durationMs: Date.now() - req.started,
+      startedAt: new Date().toISOString(),
+    };
+  }
   return null;
 }
 

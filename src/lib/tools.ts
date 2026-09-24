@@ -135,7 +135,8 @@ export const TOOLS: Tool[] = [
     },
     category: "username",
     tags: ["osint", "social"],
-    status: "planned",
+    status: "online",
+    local: true,
     url: "https://github.com/soxoj/maigret",
   },
   {
@@ -148,7 +149,8 @@ export const TOOLS: Tool[] = [
     },
     category: "web",
     tags: ["emails", "subdomains"],
-    status: "planned",
+    status: "online",
+    local: true,
     url: "https://github.com/laramies/theHarvester",
   },
   {
@@ -161,7 +163,8 @@ export const TOOLS: Tool[] = [
     },
     category: "dns",
     tags: ["subdomains", "cert"],
-    status: "planned",
+    status: "online",
+    local: true,
     url: "https://github.com/aboul3la/Sublist3r",
   },
   {
@@ -200,7 +203,8 @@ export const TOOLS: Tool[] = [
     },
     category: "web",
     tags: ["brute", "dirs"],
-    status: "planned",
+    status: "online",
+    local: true,
     url: "https://github.com/OJ/gobuster",
   },
   {
@@ -213,7 +217,8 @@ export const TOOLS: Tool[] = [
     },
     category: "network",
     tags: ["ports", "fast"],
-    status: "planned",
+    status: "online",
+    local: true,
     url: "https://github.com/robertdavidgraham/masscan",
   },
   {
@@ -226,7 +231,8 @@ export const TOOLS: Tool[] = [
     },
     category: "dns",
     tags: ["dns", "enum"],
-    status: "planned",
+    status: "online",
+    local: true,
     url: "https://github.com/darkoperator/dnsrecon",
   },
   {

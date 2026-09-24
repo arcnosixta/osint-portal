@@ -41,29 +41,36 @@ collectors, correlates the results and produces a report.
 - [x] **API skeleton** — safe seams (`/api/tools/*`) with built-in
       shell-metacharacter filtering, target allow-lists, per-run timeouts and
       output caps.
-- [x] **Ten live segments** (each behind per-segment argument allow-lists,
+- [x] **Seventeen live segments** (each behind per-segment argument allow-lists,
       with parser tests):
 
 | Segment | What it does | Result view |
 |---|---|---|
 | `nmap` | port scan, service/OS fingerprint | ports table |
 | `netcat` | TCP connect-probe of single ports (Ncat) | ports table |
+| `masscan` | line-speed scans across huge port ranges | ports table |
 | `dig` | DNS lookups (A/AAAA/MX/TXT/NS/…) | records table |
 | `host` | lightweight DNS resolution | records table |
 | `whois` | registry data (needs `whois` installed) | whois cards |
+| `dnsrecon` | DNS enumeration: records, cache snooping, brute | records table |
+| `sublist3r` | subdomain discovery via engines + cert logs | subdomains list |
+| `theHarvester` | emails, hosts and subdomains from public sources | emails + hosts |
+| `traceroute` | network path: numbered hops + RTT samples | hops table |
 | `sherlock` | username search across 400+ platforms | found list |
+| `maigret` | username search across thousands of sites | profile list |
 | `curl` | read-only HTTP(S) probe, headers & status | plain |
 | `openssl` | live TLS certificate fingerprint (subject/SAN/dates) | cert cards |
-| `traceroute` | network path: numbered hops + RTT samples | hops table |
+| `gobuster` | directory/subdomain/vhost/DNS brute-force | hits list |
 | `jq` | fetch JSON from an allow-listed URL and filter it | plain |
+| `python3` | verified interpreter version probe (no arbitrary code) | version card |
 
 - [x] **Anya** — a living AI assistant (floating chat, bottom-right). An
       animated avatar blinks, tracks what you type, thinks and speaks; Anya
       explains tools, reads workbench results and suggests next steps. Plug in
       a **free** model backend (Ollama, Groq, OpenRouter) via `.env.local` —
-      or run her built-in offline brain with zero config.
+      or run her built-in offline brain with zero config. A dedicated
+      full-screen pink page (`/anya`) cross-fades her mood photos.
 
-- [ ] **More segments** — wiring real execution one pull request per tool.
 - [ ] **Graph visualization** — correlate findings into an entity graph.
 
 ---
@@ -95,31 +102,40 @@ running portal with every workbench unlocked.
 |---|---|---|---|
 | `nmap` / `ncat` | `sudo apt install nmap` | `brew install nmap` | `choco install nmap` (includes Ncat) |
 | `netcat` | `sudo apt install netcat-openbsd` | `brew install netcat` | ships with Nmap |
+| `masscan` | `sudo apt install masscan` | `brew install masscan` | use WSL 2 ↴ |
 | `dig` / `host` | `sudo apt install dnsutils` | built-in (BIND) | use WSL 2 ↴ |
 | `whois` | `sudo apt install whois` | `brew install whois` | use WSL 2 ↴ |
+| `dnsrecon` | `pip install --user dnsrecon` | `pip install --user dnsrecon` | use WSL 2 ↴ |
+| `sublist3r` | `pip install --user sublist3r` | `pip install --user sublist3r` | use WSL 2 ↴ |
+| `theHarvester` | `pip install --user theHarvester` | `pip install --user theHarvester` | use WSL 2 ↴ |
+| `maigret` | `pip install --user maigret` | `pip install --user maigret` | use WSL 2 ↴ |
+| `gobuster` | `sudo apt install gobuster` (or `go install github.com/OJ/gobuster/v3@latest`) | `brew install gobuster` | use WSL 2 ↴ |
 | `traceroute` | `sudo apt install traceroute` | built-in | `tracert` on Windows |
 | `openssl` | `sudo apt install openssl` | built-in (LibreSSL) · `brew install openssl` for full OpenSSL | use WSL 2 or Git-for-Windows' OpenSSL |
 | `curl` | `sudo apt install curl` | built-in | built-in (10+) |
 | `jq` | `sudo apt install jq` | `brew install jq` | `choco install jq` |
 | `sherlock` | `pip install --user sherlock-project` | same (needs Python 3.8+) | use WSL 2 ↴ |
+| `python3` | `sudo apt install python3` | `brew install python3` | `winget install Python.Python.3` |
+| wordlists | `sudo apt install seclists` (used by gobuster) | `brew install seclists` | use WSL 2 ↴ |
 
-**Windows tip.** The portal runs natively on Windows, but most OSINT binaries
-(`dig`, `whois`, `traceroute`) are Unix-native. For full segment coverage run
-the whole stack inside **WSL 2** (Ubuntu) — the Linux guide below applies
-verbatim inside a WSL terminal.
+> **Windows tip.** The portal runs natively on Windows, but most OSINT binaries
+> (`dig`, `whois`, `traceroute`, and the pip/Go tooling) are Unix-native. For
+> full segment coverage run the whole stack inside **WSL 2** (Ubuntu) — the
+> Linux guide below applies verbatim inside a WSL terminal.
 
 ---
 
 ### 🐧 Linux (Debian / Ubuntu)
 
 ```bash
-# 1. Node.js 22 LTS (via NodeSource) + core tools
+# 1. Node.js 22 LTS (via NodeSource) + core tools + wordlists
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt install -y nodejs git python3 python3-pip \
-  nmap netcat-openbsd dnsutils whois traceroute openssl curl jq
+  nmap netcat-openbsd dnsutils whois traceroute openssl curl jq \
+  masscan gobuster seclists
 
-# 2. Sherlock (username search engine)
-pip install --user sherlock-project
+# 2. Sherlock + the Python toolchain (username & OSINT collectors)
+pip install --user sherlock-project dnsrecon sublist3r theHarvester maigret
 export PATH="$HOME/.local/bin:$PATH"
 
 # 3. Get the source
@@ -149,10 +165,10 @@ npm run dev       # → http://localhost:3000
 
 # 2. Node.js 22 LTS + toolchain
 brew install node@22 git python3 nmap netcat whois \
-  openssl jq traceroute
+  openssl jq traceroute masscan gobuster seclists
 
-# 3. Sherlock
-python3 -m pip install --user sherlock-project
+# 3. Sherlock + Python collectors
+python3 -m pip install --user sherlock-project dnsrecon sublist3r theHarvester maigret
 export PATH="$HOME/Library/Python/3.13/bin:$PATH"   # or: "$HOME/.local/bin"
 
 # 4. Source + install
@@ -229,6 +245,34 @@ curl -X POST http://localhost:3000/api/tools/dig \
 curl -X POST http://localhost:3000/api/tools/sherlock \
   -H 'Content-Type: application/json' \
   -d '{"target":"octocat","args":["--timeout","3"]}'
+
+# Username search across thousands of sites (maigret)
+curl -X POST http://localhost:3000/api/tools/maigret \
+  -H 'Content-Type: application/json' \
+  -d '{"target":"octocat","args":["--timeout","30"]}'
+
+# Subdomain discovery / DNS enumeration
+curl -X POST http://localhost:3000/api/tools/sublist3r \
+  -H 'Content-Type: application/json' \
+  -d '{"target":"example.com"}'
+curl -X POST http://localhost:3000/api/tools/dnsrecon \
+  -H 'Content-Type: application/json' \
+  -d '{"target":"example.com","args":["-t","std"]}'
+
+# Email/host harvesting
+curl -X POST http://localhost:3000/api/tools/theHarvester \
+  -H 'Content-Type: application/json' \
+  -d '{"target":"example.com","args":["-l","100"]}'
+
+# Fast port scanning (private/loopback targets by default)
+curl -X POST http://localhost:3000/api/tools/masscan \
+  -H 'Content-Type: application/json' \
+  -d '{"target":"127.0.0.1","args":["-p","1-1024"]}'
+
+# Directory brute-force — needs a mode + a wordlist on disk or seclists
+curl -X POST http://localhost:3000/api/tools/gobuster \
+  -H 'Content-Type: application/json' \
+  -d '{"target":"http://127.0.0.1:3000","args":["dir"]}'
 
 # Fetch JSON and filter it with jq
 curl -X POST http://localhost:3000/api/tools/jq \
@@ -344,9 +388,9 @@ See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the detailed contract.
 
 ## Roadmap
 
-- [ ] More segment wiring (maigret, sublist3r, theHarvester, gobuster, ...) behind allow-lists
-- [ ] Graph visualization / evidence store
+- [ ] Graph visualization / evidence store (Flowsint module)
 - [ ] Reproducible reports
+- [ ] Expand the catalog beyond the current 18 tools
 - [ ] GitHub Actions CI
 
 ## License
