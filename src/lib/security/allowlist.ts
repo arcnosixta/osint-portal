@@ -4,9 +4,14 @@ import { isIP } from "node:net";
  * Target allow-list for tool execution.
  *
  * No segment may run against a target that is not inside this allow-list.
- * Defaults to loopback + private/link-local ranges only; operators extend it
- * with `OSINT_ALLOWED_TARGETS` (comma-separated CIDRs, IPs or domains) to
- * cover exactly the assets they own or are authorized to test.
+ * Defaults to loopback + private ranges only; operators extend it with
+ * `OSINT_ALLOWED_TARGETS` (comma-separated CIDRs, IPs or domains) to cover
+ * exactly the assets they own or are authorized to test.
+ *
+ * Link-local space (169.254.0.0/16, fe80::/10) is deliberately excluded: on a
+ * cloud host that range is the instance metadata service, so allowing it by
+ * default would turn the portal into a credential-exfiltration relay. Add it
+ * explicitly via `OSINT_ALLOWED_TARGETS` only if you know that is what you want.
  */
 
 export interface Cidr {
@@ -93,12 +98,10 @@ const DEFAULT_V4: Cidr[] = [
   parseCidr("10.0.0.0/8")!,
   parseCidr("172.16.0.0/12")!,
   parseCidr("192.168.0.0/16")!,
-  parseCidr("169.254.0.0/16")!,
 ];
 const DEFAULT_V6: Cidr[] = [
   parseCidr("::1/128")!,
   parseCidr("fc00::/7")!,
-  parseCidr("fe80::/10")!,
 ];
 const DEFAULT_HOSTS = new Set(["localhost", "localhost.localdomain"]);
 

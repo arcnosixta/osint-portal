@@ -27,6 +27,19 @@ test("default allow-list rejects public and forged targets", () => {
   assert.ok(!a.contains("10.0.0.999"));
 });
 
+test("default allow-list rejects link-local, including cloud metadata", () => {
+  const a = new AllowList([]);
+  assert.ok(!a.contains("169.254.169.254"));
+  assert.ok(!a.contains("169.254.0.1"));
+  assert.ok(!a.contains("fe80::1"));
+  assert.ok(!a.contains("fe80::1", { publicHostnames: true }));
+});
+
+test("link-local can be opted into explicitly", () => {
+  const a = new AllowList(["169.254.0.0/16"]);
+  assert.ok(a.contains("169.254.169.254"));
+});
+
 test("publicHostnames opt-in allows well-formed hostnames, not IPs", () => {
   const a = new AllowList([]);
   assert.ok(a.contains("example.com", { publicHostnames: true }));

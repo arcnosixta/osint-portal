@@ -81,6 +81,7 @@ export const en = {
     binaryMissing: "binary not detected on this host. Install it to run live commands.",
     targetRequired: "target required — type an IP, hostname, username or URL.",
     networkError: "request failed — is the dev server running?",
+    runnerOffline: "local runner is not answering — start it with `npm run runner`.",
     unparseable: "unparseable server response",
     related: "related tools",
     statusOk: "ok",
@@ -116,6 +117,17 @@ export const en = {
       ip: "ip",
       rtt: "rtt",
     },
+  },
+  runner: {
+    whyTitle: "Tools run on your own computer",
+    whyBody:
+      "A website cannot start a program on your machine, so a local helper does it — and it only acts after you confirm on its own page.",
+    openHelper: "Start the tools",
+    checking: "checking…",
+    helperMissing: "helper is not responding",
+    helperBlocked:
+      "the browser is blocking this site from the local network — allow local network access in the address bar and the button will find the helper",
+    runnerError: "runner",
   },
   pipeline: {
     kicker: "how it works",
@@ -213,6 +225,22 @@ export const en = {
     localNote:
       "No AI backend is connected yet — Anya answers from a built-in offline brain. Set ANYA_OLLAMA_URL, ANYA_GROQ_API_KEY or ANYA_OPENROUTER_API_KEY in .env.local to unlock real answers.",
     networkError: "chat failed — is the dev server running?",
+    settings: {
+      title: "your model, your key",
+      blurb:
+        "This portal is public but its owner's provider keys are private. Add your own key and Anya will call your provider straight from this browser — the site never sees it.",
+      apiKey: "API key",
+      baseUrl: "Base URL",
+      model: "Model",
+      ollamaUrl: "Ollama URL",
+      localOnly:
+        "The key is stored in this browser's localStorage and sent directly to the provider. Leave it empty to use the built-in offline brain instead.",
+      save: "save",
+      forget: "forget key",
+      cancel: "cancel",
+      optional: "optional — offline brain works without it",
+    },
+    openSettings: "use your own AI key",
     greeting:
       "Hi! I'm Anya — the portal's AI assistant. Ask me about tools, workbench results or the next step in your OSINT investigation.",
   },

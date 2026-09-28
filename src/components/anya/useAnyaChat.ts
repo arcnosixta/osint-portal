@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import type { AnyaMode } from "@/lib/anya/face";
 import type { AnyaEmotion } from "@/lib/anya/types";
+import { askAnyaWithVisitorKey, hasVisitorKey, loadAnyaSettings } from "@/lib/anya/visitor";
 
 export interface AnyaChatMsg {
   id: number;
@@ -114,18 +115,38 @@ export function useAnyaChat() {
       const apiMessages = [...msgs, userMsg]
         .slice(-12)
         .map((m) => ({ role: m.role, content: m.content }));
-      const res = await fetch("/api/anya", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages, language: lang }),
-      });
-      const data = (await res.json()) as {
+
+      const settings = loadAnyaSettings();
+      let data: {
         ok?: boolean;
         reply?: string;
         emotion?: AnyaEmotion;
         message?: string;
       };
-      if (!res.ok || !data.ok || typeof data.reply !== "string") {
+
+      if (hasVisitorKey(settings)) {
+        // Visitor's own key: call the provider from the browser so the site
+        // owner never pays for someone else's conversation.
+        try {
+          const res = await askAnyaWithVisitorKey(
+            { messages: apiMessages, language: lang },
+            settings,
+          );
+          data = { ok: true, reply: res.reply, emotion: res.emotion };
+        } catch (err) {
+          data = { ok: false, message: err instanceof Error ? err.message : "provider failed" };
+        }
+      } else {
+        const res = await fetch("/api/anya", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: apiMessages, language: lang }),
+        });
+        data = (await res.json()) as typeof data;
+        if (!res.ok) data = { ...data, ok: false };
+      }
+
+      if (!data.ok || typeof data.reply !== "string") {
         throw new Error(data.message || "bad response");
       }
       const id = nextId++;

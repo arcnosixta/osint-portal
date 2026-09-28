@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const result = await runAnya({ messages, language });
+  const result = await runAnya({ messages, language }, { env: process.env });
   return NextResponse.json({ ok: true, ...result });
 }
 

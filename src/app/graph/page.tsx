@@ -14,6 +14,7 @@ import GraphCanvas, { NODE_COLORS, NODE_TYPES } from "@/components/graph/GraphCa
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { gsap } from "@/lib/animations";
 import { cn } from "@/lib/utils";
+import { runnerApi, runnerEnabled } from "@/lib/runner-client";
 import type { EntityType } from "@/lib/graph";
 
 interface GraphPayload {
@@ -92,7 +93,7 @@ const load = useCallback(
   async (opts?: { silent?: boolean }) => {
     if (!opts?.silent) setBusy(true);
     try {
-      const res = await fetch("/api/graph", { cache: "no-store" });
+      const res = await fetch(runnerApi("/api/graph"), { cache: "no-store" });
       const json = (await res.json()) as GraphPayload;
       if (!res.ok || !json.ok) throw new Error("bad response");
       if (json.count > 0) {
@@ -117,18 +118,18 @@ const load = useCallback(
         setSource("local");
         setError(null);
       } else {
-        setError(dict.workbench.networkError);
+        setError(runnerEnabled ? dict.workbench.runnerOffline : dict.workbench.networkError);
       }
     } finally {
       if (!opts?.silent) setBusy(false);
     }
   },
-  [dict.workbench.networkError],
+  [dict.workbench.networkError, dict.workbench.runnerOffline],
 );
 
 useEffect(() => {
   let alive = true;
-  fetch("/api/graph", { cache: "no-store" })
+  fetch(runnerApi("/api/graph"), { cache: "no-store" })
     .then((res) => res.json())
     .then((json: GraphPayload) => {
       if (!alive) return;
@@ -154,18 +155,18 @@ useEffect(() => {
         setSource("local");
         setError(null);
       } else {
-        setError(dict.workbench.networkError);
+        setError(runnerEnabled ? dict.workbench.runnerOffline : dict.workbench.networkError);
       }
     });
   return () => {
     alive = false;
   };
-}, [dict.workbench.networkError]);
+}, [dict.workbench.networkError, dict.workbench.runnerOffline]);
 
 const clearEvidence = useCallback(async () => {
   setBusy(true);
   try {
-    await fetch("/api/evidence", { method: "DELETE" });
+    await fetch(runnerApi("/api/evidence"), { method: "DELETE" });
     removeLocal(GRAPH_KEY);
     removeLocal(LAYOUT_KEY);
     cached.current = null;

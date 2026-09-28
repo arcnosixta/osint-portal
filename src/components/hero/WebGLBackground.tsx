@@ -130,41 +130,12 @@ export default function WebGLBackground({ className }: WebGLBackgroundProps) {
     // ---- pause when offscreen / hidden ----
     let visible = true;
     let pageHidden = false;
-    const onVisibility = () => {
-      pageHidden = document.hidden;
-    };
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        visible = entry.isIntersecting;
-      },
-      { threshold: 0 },
-    );
-    io.observe(container);
-    document.addEventListener("visibilitychange", onVisibility);
-
-    // ---- resize ----
-    const onResize = () => {
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      if (w === 0 || h === 0) return;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    };
-    window.addEventListener("resize", onResize);
+    const isActive = () => visible && !pageHidden;
 
     // ---- animation loop ----
     let rafId = 0;
-    const isActive = () => visible && !pageHidden;
 
-    const tick = () => {
-      rafId = requestAnimationFrame(tick);
-      if (!isActive() && !prefersReduced) {
-        // still render a single idle frame occasionally; cheap:
-        renderer.render(scene, camera);
-        return;
-      }
-
+    const frame = () => {
       const t = performance.now() * 0.001;
 
       core.rotation.x = t * 0.12;
@@ -189,21 +160,71 @@ export default function WebGLBackground({ className }: WebGLBackgroundProps) {
       renderer.render(scene, camera);
     };
 
-    if (!prefersReduced) {
-      tick();
-      const stop = () => {
-        cancelAnimationFrame(rafId);
-      };
-      window.addEventListener("beforeunload", stop);
-    } else {
+    const tick = () => {
+      rafId = requestAnimationFrame(tick);
+      frame();
+    };
+
+    const start = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(tick);
+    };
+
+    const stop = () => {
+      if (!rafId) return;
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+    };
+
+    // A paused canvas must still be repainted when the buffer is resized.
+    const paintIdle = () => {
+      if (!prefersReduced && !isActive()) renderer.render(scene, camera);
+    };
+
+    const sync = () => {
+      if (prefersReduced) return;
+      if (isActive()) start();
+      else stop();
+    };
+
+    const onVisibility = () => {
+      pageHidden = document.hidden;
+      sync();
+    };
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        visible = entry.isIntersecting;
+        sync();
+      },
+      { threshold: 0 },
+    );
+    io.observe(container);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    // ---- resize ----
+    const onResize = () => {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      if (w === 0 || h === 0) return;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+      paintIdle();
+    };
+    window.addEventListener("resize", onResize);
+
+    if (prefersReduced) {
       renderer.render(scene, camera);
+    } else {
+      start();
+      window.addEventListener("beforeunload", stop);
     }
 
     return () => {
-      cancelAnimationFrame(rafId);
+      stop();
       window.removeEventListener("pointermove", onPointer);
       window.removeEventListener("resize", onResize);
-      window.removeEventListener("beforeunload", () => cancelAnimationFrame(rafId));
+      window.removeEventListener("beforeunload", stop);
       document.removeEventListener("visibilitychange", onVisibility);
       io.disconnect();
       pointsGeo.dispose();
@@ -215,6 +236,7 @@ export default function WebGLBackground({ className }: WebGLBackgroundProps) {
       glowTex.dispose();
       glowMat.dispose();
       renderer.dispose();
+      renderer.forceContextLoss();
       if (renderer.domElement.parentNode === container) {
         container.removeChild(renderer.domElement);
       }

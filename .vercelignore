@@ -1,0 +1,7 @@
+# Vercel uploads the project directory. .gitignore already excludes these,
+# but .env.local holds a real provider key, so state it explicitly here too.
+.env*
+!.env.example
+
+# Runtime case file — evidence and graph are per-machine, never deployed.
+.osint-portal

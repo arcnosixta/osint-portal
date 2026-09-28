@@ -20,6 +20,12 @@ shell-free API. Results come back as structured tables and a live-console log.
 
 ## What's new
 
+- **Public deploy + local tools.** `npm run helper:install` watches the tools and a
+  disk-backed case file on `127.0.0.1`; the site (Vercel or local) drives it from
+  the browser. Evidence and the graph survive restarts. See *Deploying the site*.
+- **Bring your own AI key.** Visitors pick a provider and paste their key in the
+  chat; it is stored in that browser and the provider is called from the page,
+  never through the site — so a public deployment costs the owner nothing.
 - **Entity graph + evidence store.** Every successful run is recorded
   (`/api/evidence`) and correlated into a visual graph (`/api/graph`). New
   `/graph` page: canvas, counters, legend, click-to-inspect panels with
@@ -373,6 +379,13 @@ By default only loopback/private targets are allowed; extend with
 targets are always gated; read-only DNS/registry segments (dig, host, whois)
 accept public hostname targets.
 
+**The same endpoints exist on the runner.** Swap `http://localhost:3000` for
+`http://127.0.0.1:8787` and you talk to `npm run runner` directly — same routes,
+but that process owns the on-disk case file, so evidence survives restarts. The
+`:3000` routes above are the curl-friendly path and keep evidence in the Next
+process only, which is why the UI (and the deployed site) goes through the
+runner instead.
+
 ### Entity graph (`/graph`)
 
 Open `/graph` to see everything you've collected as one living map: usernames,
@@ -400,6 +413,7 @@ UI keys the app persists (`osint-portal-*` prefix):
 | `osint-portal-workbench-history` | last 8 runs per shared history |
 | `osint-portal-graph` | last graph payload snapshot (local fallback) |
 | `osint-portal-graph-layout` | node positions for a stable, static layout |
+| `osint-portal.anya.settings` | the visitor's own Anya provider + key (BYOK) |
 
 ### Environment variables
 
@@ -408,6 +422,10 @@ UI keys the app persists (`osint-portal-*` prefix):
 | `OSINT_ALLOWED_TARGETS` | comma-separated extra targets (CIDRs/IPs/domains) | loopback + private ranges |
 | `OSINT_RUN_TIMEOUT_MS` | hard timeout per tool run | 20000 (sherlock 60000) |
 | `OSINT_MAX_OUTPUT_BYTES` | max captured stdout/stderr per run | 64000 |
+| `OSINT_CASE_FILE` | where the local runner keeps the case file | `./.osint-portal/evidence.json` |
+| `NEXT_PUBLIC_RUNNER_URL` | loopback address of the local runner, baked into the client at build time | — (same origin) |
+| `RUNNER_PORT` | port the runner listens on (loopback only) | 8787 |
+| `RUNNER_ALLOWED_ORIGINS` | extra browser origins allowed to drive the runner | `localhost` + `*.vercel.app` |
 | `ANYA_OLLAMA_URL` | local Ollama endpoint (used automatically) | `http://127.0.0.1:11434` |
 | `ANYA_GROQ_API_KEY` | free Groq key (Llama 3.1 8B) | — |
 | `ANYA_OPENROUTER_API_KEY` | free OpenRouter `:free` models | — |
@@ -443,6 +461,14 @@ curl http://localhost:3000/api/anya
 With no backend configured Anya stays online using her built-in offline brain —
 and tells you how to upgrade her.
 
+**Bring your own key (public deployments).** When the site is public but the
+operator's keys are private, visitors configure their own provider in the chat
+(`свой ключ ИИ` / `use your own AI key`). The key is written to that browser's
+`localStorage` and the provider is called **straight from the page** — it never
+reaches the site, so you pay nothing for other people's conversations. The
+server-side variables above stay empty on Vercel, which leaves the server on
+the offline brain as a fallback.
+
 **Full-screen pink chat:** open `/anya` (link in the widget header) for a
 dedicated page where her mood slowly cross-fades the backdrop photo.
 
@@ -460,6 +486,127 @@ these names and never renames them:
 
 Missing photos fall back to the procedural SVG avatar, so nothing breaks before
 you push the images.
+
+---
+
+## Deploying the site (Vercel)
+
+The site can live on Vercel while the tools and the case file stay on each
+visitor's own machine. The important thing to understand first:
+
+> A serverless function has no route to `127.0.0.1` on someone's PC, and it
+> cannot run `nmap` or `theHarvester`. So the **browser** talks to the **local
+> runner** directly (`http://127.0.0.1:8787`). The deployment only serves the UI.
+
+```
+visitor's browser ──► Vercel (UI, static assets, offline-brain /api/anya)
+       │
+       ├── status  ──► 127.0.0.1:8788 helper (your confirmation starts the tools)
+       └── runs    ──► 127.0.0.1:8787 runner ──► binaries
+                                                    └─► .osint-portal/evidence.json
+```
+
+### 1. Deploy the UI
+
+Push the repo and import it in Vercel (framework preset: **Next.js** — no
+`vercel.json` needed). Set exactly one variable:
+
+| Variable | Value |
+|---|---|
+| `NEXT_PUBLIC_RUNNER_URL` | `http://127.0.0.1:8787` |
+
+Do **not** set `ANYA_*` keys there. The site is public; leaving them empty keeps
+Anya on the offline brain while each visitor brings their own key.
+
+### 2. Install the local helper (once per machine)
+
+A web page cannot start a process, and a cloud deployment cannot reach your PC.
+So the **helper** runs on your machine: it keeps the runner supervised and, on
+your explicit confirmation, starts the tools. The website can *see* the helper
+but cannot press the button for you.
+
+```bash
+git clone https://github.com/arcnosixta/osint-portal.git
+cd osint-portal && npm install
+npm run helper:install
+```
+
+That single command:
+
+- registers the `osint-runner://` browser scheme;
+- installs an autostart entry — a systemd **user** unit on Linux
+  (`~/.config/systemd/user/`), a LaunchAgent on macOS, or a
+  `Startup` shortcut on Windows — so the helper is up after you log in;
+- starts the helper right away.
+
+Check or undo it with `npm run helper:install` again, `npm run helper:install --
+uninstall`, or the **Автозапуск** button on the control page.
+
+> **The browser will ask once.** A site served over HTTPS counts as a *public*
+> origin, and Chrome/Edge will not let it touch `127.0.0.1` until you allow
+> local-network access for that site (the prompt appears in the address bar).
+> Accept it and the button finds the helper by itself. Locally, at
+> `http://localhost:3000`, there is nothing to approve.
+
+Then, on the site: **«Запустить утилиты»** opens
+`http://127.0.0.1:8788`, a control page bound to loopback only. Press **«Запустить
+утилиты»** there. The site button then disappears on its own, because the
+status probe sees the runner online.
+
+```
+visitor's browser ──► Vercel (UI, static assets, offline-brain /api/anya)
+       │
+       ├── status probe ──► 127.0.0.1:8788  helper  ── is it up?
+       └── tool calls    ──► 127.0.0.1:8787  runner  ──► binaries
+                                                          └─► .osint-portal/evidence.json
+```
+
+### 3. What the helper and runner expose
+
+Helper (`http://127.0.0.1:8788`):
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/status` | read-only: is the runner up, and is autostart on |
+| `POST /api/runner/start` | start the tools (local origins only) |
+| `POST /api/runner/stop` | stop a runner this helper started |
+| `POST /api/autostart` | turn the login entry on or off |
+
+Runner (`http://127.0.0.1:8787`):
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/health` | runner status, tool catalog, binary count, evidence count |
+| `GET /api/tools` | the catalog with per-tool availability |
+| `GET`/`POST /api/tools/:tool` | run one segment (`POST { "target": "…" }`) |
+| `GET`/`DELETE /api/evidence` | read or wipe the case file |
+| `GET /api/graph` | correlated entity graph from the evidence |
+
+### 4. Why a page cannot start the tools for you
+
+- The helper binds to `127.0.0.1` only, so nothing off-machine can reach it.
+- Chrome's local-network permission is the outer lock: until you allow it, even
+  the read-only status probe fails, and the page says so instead of pretending
+  the helper is missing.
+- `POST /api/runner/start` is rejected for a foreign `Origin` (HTTP 403) — the
+  deployed site gets the status, never the start button. Tools start from a
+  local page, or from `curl` with no `Origin`, but only when you ask.
+- The runner binds to `127.0.0.1` and answers CORS only for `localhost`,
+  `127.0.0.1` and `https://*.vercel.app`. If you serve the site from your own
+  domain, add it explicitly: `RUNNER_ALLOWED_ORIGINS=https://osint.example.com`.
+  For a public production site you can narrow the default further by setting
+  that variable to your exact domain.
+- The segment allow-list still applies, so the runner cannot be used to scan
+  arbitrary internet hosts. Link-local ranges (the cloud metadata address) are
+  **not** allowed by default — opt in only via `OSINT_ALLOWED_TARGETS`.
+- The helper never sees your Anya key and cannot reach the network.
+
+### 5. If the tools look "unavailable" on the deployed site
+
+That is expected and not a bug: the catalog on Vercel cannot see the binaries.
+The workbench and `/graph` call the runner, so they work as long as the helper
+and runner are up on the same machine as the browser. If a run fails, the UI
+shows `npm run helper:install` as the fix.
 
 ---
 

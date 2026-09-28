@@ -22,6 +22,8 @@ import { getWorkbench } from "@/lib/workbench";
 import { TOOL_CATEGORIES, TOOLS, type Tool, type ToolStatus } from "@/lib/tools";
 import { cn } from "@/lib/utils";
 import { sleep } from "@/lib/utils";
+import { runnerApi, runnerEnabled } from "@/lib/runner-client";
+import { StartToolsButton } from "@/components/workbench/StartToolsButton";
 import ResultView from "./ResultView";
 
 const HISTORY_KEY = "osint-portal-workbench-history";
@@ -226,14 +228,18 @@ export default function ToolWorkbench({
     const doFetch = async () => {
       let res: Response;
       try {
-        res = await fetch(`/api/tools/${tool.id}`, {
+        res = await fetch(runnerApi(`/api/tools/${tool.id}`), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ target: tgt, args }),
         });
       } catch {
         if (runIdRef.current !== id) return;
-        appendMeta({ kind: "err", text: t.networkError, status: "error" });
+        appendMeta({
+          kind: "err",
+          text: runnerEnabled ? t.runnerOffline : t.networkError,
+          status: "error",
+        });
         setRunning(false);
         setTypedCmd("");
         return;
@@ -458,6 +464,12 @@ export default function ToolWorkbench({
             <div className="mt-6 flex items-start gap-2.5 rounded-lg border border-[#fbbf24]/40 bg-[#fbbf24]/5 px-4 py-3">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#fbbf24]" aria-hidden="true" />
               <p className="font-mono text-xs leading-relaxed text-[#fbbf24]/90">{t.notConnected}</p>
+            </div>
+          )}
+
+          {runnerEnabled && (
+            <div className="mt-6">
+              <StartToolsButton />
             </div>
           )}
 

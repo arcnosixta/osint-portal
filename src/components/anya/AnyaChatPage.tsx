@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { AnyaBackdrop } from "@/components/anya/AnyaBackdrop";
 import { AnyaFace } from "@/components/anya/AnyaFace";
 import { useAnyaChat } from "@/components/anya/useAnyaChat";
+import { AnyaKeySettings } from "@/components/anya/AnyaKeySettings";
 import { cn } from "@/lib/utils";
 
 export function AnyaChatPage() {
   const { dict } = useLanguage();
   const chat = useAnyaChat();
+  const [showKeySettings, setShowKeySettings] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -29,6 +31,8 @@ export function AnyaChatPage() {
     <section className="relative flex h-screen flex-col overflow-hidden bg-[#12030d] text-[#ffe3ef]">
       <AnyaBackdrop emotion={chat.emotion} mode={chat.mode} />
       <div className="anya-grid pointer-events-none absolute inset-0" aria-hidden="true" />
+
+      {showKeySettings && <AnyaKeySettings onClose={() => setShowKeySettings(false)} />}
 
       {/* top bar */}
       <header className="relative z-10 flex shrink-0 items-center justify-between gap-4 border-b border-[#ff6fb5]/20 px-6 py-4 backdrop-blur-sm">
@@ -54,6 +58,14 @@ export function AnyaChatPage() {
             <span className={cn("h-2 w-2 rounded-full", chat.busy ? "bg-yellow-400" : "bg-[#ff4d9d]")} />
             {statusLabel}
           </span>
+          <button
+            type="button"
+            onClick={() => setShowKeySettings(true)}
+            aria-label={dict.anya.openSettings}
+            className="cursor-pointer rounded-md border border-[#ff6fb5]/40 bg-[#2a0617]/60 px-3 py-1.5 font-mono text-[11px] text-[#ffb3db] transition-colors hover:border-[#ff9bcf] hover:text-[#ffe3ef]"
+          >
+            {dict.anya.openSettings}
+          </button>
           <button
             type="button"
             onClick={chat.clear}

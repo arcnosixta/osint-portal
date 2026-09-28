@@ -10,12 +10,12 @@ export interface AnyaDeps {
     language: Parameters<typeof tryProviders>[1],
     env: EnvLike,
   ) => Promise<ProviderReply | null>;
-  env?: EnvLike;
+  env: EnvLike;
 }
 
 const MAX_BODY_MESSAGES = 20;
 
-export async function runAnya(req: AnyaRequest, deps: AnyaDeps = {}): Promise<AnyaResponse> {
+export async function runAnya(req: AnyaRequest, deps: AnyaDeps): Promise<AnyaResponse> {
   const language = req.language === "ru" ? "ru" : "en";
   const raw = Array.isArray(req.messages) ? req.messages.slice(-MAX_BODY_MESSAGES) : [];
   const history = capHistory(raw);
@@ -23,7 +23,7 @@ export async function runAnya(req: AnyaRequest, deps: AnyaDeps = {}): Promise<An
     ? [{ role: "system" as const, content: buildSystemPrompt(language) }, ...history]
     : [{ role: "system" as const, content: buildSystemPrompt(language) }];
 
-  const env = deps.env ?? (process.env as EnvLike);
+  const env = deps.env;
   const chat = deps.providers ?? tryProviders;
 
   const lastUser = [...history].reverse().find((m) => m.role === "user");

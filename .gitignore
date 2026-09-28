@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# osint portal runtime data (case file: evidence + graph, OSINT_CASE_FILE)
+/.osint-portal
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
