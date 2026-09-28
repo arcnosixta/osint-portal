@@ -61,7 +61,7 @@ export const en = {
     argsPlaceholder: "flags — e.g. -sV -Pn -p 80,443",
     presets: "quick presets",
     palette: "flag palette",
-    run: "run",
+    run: "execute",
     running: "running…",
     resultHeading: "structured result",
     exit: "exit",
@@ -82,7 +82,8 @@ export const en = {
     binaryMissing: "binary not detected on this host. Install it to run live commands.",
     targetRequired: "target required — type an IP, hostname, username or URL.",
     networkError: "request failed — is the dev server running?",
-    runnerOffline: "local runner is not answering — start it with `npm run runner`.",
+    runnerOffline:
+      "the tool runner is not answering. This computer needs the local helper: run `npm run helper:install` once, then press “Start tools” above. Installing nmap alone is not enough.",
     unparseable: "unparseable server response",
     related: "related tools",
     statusOk: "ok",

@@ -63,7 +63,7 @@ export const ru: Dictionary = {
     argsPlaceholder: "флаги — напр. -sV -Pn -p 80,443",
     presets: "быстрые пресеты",
     palette: "палитра флагов",
-    run: "запустить",
+    run: "выполнить",
     running: "выполняется…",
     resultHeading: "структурированный результат",
     exit: "код",
@@ -84,7 +84,8 @@ export const ru: Dictionary = {
     binaryMissing: "бинарник не найден на этой машине. Установите его, чтобы запускать живые команды.",
     targetRequired: "укажите цель — IP, хост, username или URL.",
     networkError: "запрос не прошёл — dev-сервер запущен?",
-    runnerOffline: "локальный раннер не отвечает — запустите его командой `npm run runner`.",
+    runnerOffline:
+      "раннер утилит не отвечает. На этом компьютере нужен локальный помощник: один раз выполните `npm run helper:install`, затем нажмите «Запустить утилиты» выше. Одной установки nmap мало.",
     unparseable: "не удалось разобрать ответ сервера",
     related: "похожие инструменты",
     statusOk: "ок",
