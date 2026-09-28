@@ -72,6 +72,7 @@ export const en = {
     launchNote: "launches a real local process — no shell, no cloud. Args are allow-listed; targets are gated by OSINT_ALLOWED_TARGETS.",
     availability: "binary",
     badgePresent: "present",
+    badgeUnknown: "unknown",
     badgeMissing: "missing",
     badgeWired: "wired",
     badgePending: "not wired",

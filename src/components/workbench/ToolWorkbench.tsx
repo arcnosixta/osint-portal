@@ -138,6 +138,46 @@ export default function ToolWorkbench({
   const [result, setResult] = useState<RunResponse | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [copied, setCopied] = useState(false);
+  // Availability is a fact about the *user's* machine, and on a deployed site
+  // the server that rendered this page cannot see their binaries at all — it
+  // would report "no binary" for tools that are sitting right there. The runner
+  // is the only party that can answer, so ask it and fall back to the server's
+  // value only while the answer is still in flight.
+  const [runnerInfo, setRunnerInfo] = useState<{
+    available: boolean | null;
+    localCount: number | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!runnerEnabled) return;
+    let alive = true;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 1500);
+
+    void fetch(runnerApi("/api/tools"), { signal: ctrl.signal, cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { tools?: { id: string; available: boolean | null }[]; localCount?: number } | null) => {
+        clearTimeout(timer);
+        if (!alive || !data || !Array.isArray(data.tools)) return;
+        setRunnerInfo({
+          available: data.tools.find((x) => x.id === tool.id)?.available ?? null,
+          localCount: typeof data.localCount === "number" ? data.localCount : null,
+        });
+      })
+      .catch(() => clearTimeout(timer));
+
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+      ctrl.abort();
+    };
+  }, [tool.id]);
+
+  // With a runner configured, only the runner knows — and until it answers the
+  // honest answer is "unknown", not "missing". Falling back to the server's
+  // value here is exactly the bug this replaces.
+  const binaryReady = runnerEnabled ? (runnerInfo ? runnerInfo.available : null) : available;
+  const binariesFound = runnerEnabled ? (runnerInfo?.localCount ?? null) : localCount;
 
   const runIdRef = useRef(0);
   const idRef = useRef(0);
@@ -436,7 +476,7 @@ export default function ToolWorkbench({
                 className={cn(
                   "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-xs uppercase tracking-wider",
                   connected
-                    ? tool.local && !available
+                    ? tool.local && binaryReady === false
                       ? "border-[#fbbf24]/50 bg-[#fbbf24]/10 text-[#fbbf24]"
                       : "border-primary/50 bg-primary/10 text-primary"
                     : "border-border bg-muted/40 text-muted-foreground",
@@ -445,17 +485,18 @@ export default function ToolWorkbench({
                 <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
                 {!connected
                   ? t.badgePending
-                  : tool.local && !available
+                  : tool.local && binaryReady === false
                     ? t.badgeNoBinary
                     : t.badgeWired}
               </span>
 
               <span className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                {t.availability}: {available ? t.badgePresent : t.badgeMissing}
+                {t.availability}:{" "}
+                {binaryReady === null ? t.badgeUnknown : binaryReady ? t.badgePresent : t.badgeMissing}
               </span>
 
               <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
-                {localCount} / {toolCount} {t.localCountLabel}
+                {binariesFound ?? "—"} / {toolCount} {t.localCountLabel}
               </span>
             </div>
           </div>
@@ -473,7 +514,7 @@ export default function ToolWorkbench({
             </div>
           )}
 
-          {connected && tool.local && !available && (
+          {connected && tool.local && binaryReady === false && (
             <div className="mt-6 flex items-start gap-2.5 rounded-lg border border-[#fbbf24]/40 bg-[#fbbf24]/5 px-4 py-3">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#fbbf24]" aria-hidden="true" />
               <p className="font-mono text-xs leading-relaxed text-[#fbbf24]/90">{t.binaryMissing}</p>

@@ -74,6 +74,7 @@ export const ru: Dictionary = {
     launchNote: "запускает реальный локальный процесс — без шелла и облака. Аргументы проходят allow-list, цели — OSINT_ALLOWED_TARGETS.",
     availability: "бинарник",
     badgePresent: "есть",
+    badgeUnknown: "неизвестно",
     badgeMissing: "нет",
     badgeWired: "подключён",
     badgePending: "не подключён",
