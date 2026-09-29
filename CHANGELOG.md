@@ -8,6 +8,20 @@ plus a native messaging host. Its version is the one in
 `extension/manifest.chromium.json` and `extension/manifest.firefox.json`, and
 this repository carries the same number.
 
+## [1.1.2] — 2026-09-29
+
+### Fixed
+
+- The installer now restores the executable bit on `native/host.js`. The native
+  messaging manifest points at that file path directly, with no interpreter in
+  it, so a host file without the bit is a registration the browser cannot use —
+  and an archive written without Unix modes loses it. The installer reported
+  success and left a connector that never started. Windows is unaffected and is
+  a no-op rather than a failure.
+
+Found by unpacking the packaged connector and running the installer from the
+extracted copy, which failed with `Permission denied`.
+
 ## [1.1.1] — 2026-09-29
 
 Three fixes, all found while packaging the connector as a downloadable
