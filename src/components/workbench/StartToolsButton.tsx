@@ -87,12 +87,7 @@ export function StartToolsButton({ compact }: { compact?: boolean }) {
 
       {absent ? (
         <div className="flex flex-col gap-1.5 leading-relaxed text-[#9fb2c8]">
-          <p>
-            {t.absentFirst}{" "}
-            <code className="rounded bg-black/40 px-1.5 py-0.5 text-[#7ef0c4]">
-              npm run helper:install
-            </code>
-          </p>
+          <p>{t.absentFirst}</p>
           <p className="text-[#7f93ab]">{t.absentSecond}</p>
         </div>
       ) : (

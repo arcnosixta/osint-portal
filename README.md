@@ -524,11 +524,14 @@ Push the repo and import it in Vercel (framework preset: **Next.js** — no
 Do **not** set `ANYA_*` keys there. The site is public; leaving them empty keeps
 Anya on the offline brain while each visitor brings their own key.
 
-### 2. Install the local helper (once per machine)
+### 2. Install the connector (once per machine)
 
 A web page cannot start a process, and a cloud deployment cannot reach your PC.
-So a **helper** runs on your machine and owns the tools. The extension below is
-what lets the site reach it without you touching a terminal.
+The **connector** is what bridges that gap: a browser extension plus a native
+messaging host, which together give the site a sanctioned way to start a
+program on your machine. Behind it still sit two local processes — the
+**helper** (`127.0.0.1:8788`) and the **runner** (`127.0.0.1:8787`) — but you
+never touch them.
 
 ```bash
 git clone https://github.com/arcnosixta/osint-portal.git
@@ -560,6 +563,8 @@ it with `./install.sh uninstall` (`npm run helper:uninstall`).
 Расширения → включить Режим разработчика → Загрузить распакованное` and pick
 `extension/dist/chrome`. In Firefox: `about:debugging#/runtime/this-firefox →
 Загрузить временное дополнение` and pick `extension/dist/firefox/manifest.json`.
+The extension is called **OSINT Portal Connector**; that is the name to look for
+in the browser's extension list.
 
 > `npm install` is only needed to work on the site itself (`npm run dev`,
 > `npm run build`) or on an old Node. On Node 23.5+ the helper, the runner and
@@ -572,10 +577,12 @@ helper, and the helper starts the runner. No terminal, no login item, no local
 page to visit, no button to press — and no Local Network Access prompt, because
 the request no longer travels from a public page to a loopback address.
 
-The helper lives only while the browser keeps it alive, which is the point: a
-process that nothing starts and nothing stops is a process you have to reason
-about later. If you would rather have it up at login anyway, pass the flag:
-`./install.sh autostart`.
+Nothing starts at login, because nothing needs to: the connector launches the
+host when the site asks, and the host starts the helper only if the helper is
+not already listening. The helper and runner are left running once started and
+keep their evidence in `runner/evidence.json`; `POST /api/runner/stop` stops a
+runner this helper started. If you would rather have them up at login anyway,
+pass the flag: `./install.sh autostart`.
 
 > **Why an extension.** Chrome will not let a public HTTPS page touch
 > `127.0.0.1` until you grant local-network access, and it has tightened that
@@ -599,8 +606,8 @@ loopback ports and nowhere else.
 ```
 visitor's browser ──► Vercel (UI, static assets, offline-brain /api/anya)
         │
-        └── page ──postMessage──► extension ──native messaging──► host ──► helper :8788 ──► runner :8787 ──► binaries
-                                    (only our origin)            (path allow-list)                                       └─► evidence.json
+        └── page ──postMessage──► OSINT Portal Connector ──native messaging──► host ──► helper :8788 ──► runner :8787 ──► binaries
+                                    (only our origin)          (fixed id)          (path allow-list)                               └─► evidence.json
 ```
 
 ### 3. What the helper and runner expose
@@ -627,13 +634,18 @@ Runner (`http://127.0.0.1:8787`):
 
 ### 4. Why a page cannot start the tools for you
 
-- The helper binds to `127.0.0.1` only, so nothing off-machine can reach it.
-- Chrome's local-network permission is the outer lock: until you allow it, even
-  the read-only status probe fails, and the page says so instead of pretending
-  the helper is missing.
-- `POST /api/runner/start` is rejected for a foreign `Origin` (HTTP 403) — the
-  deployed site gets the status, never the start button. Tools start from a
-  local page, or from `curl` with no `Origin`, but only when you ask.
+- The browser only launches a native host that a manifest points at, and the
+  manifest names a fixed extension id. So the chain starts from an extension the
+  user installed on purpose, not from anything a page can ask for.
+- The native host forwards a fixed path allow-list to two loopback ports and
+  nowhere else, and the helper binds to `127.0.0.1` only, so nothing
+  off-machine can reach it.
+- The extension injects itself only on the deployed origin and
+  `http://localhost:3000`, and its background script re-checks the sender origin
+  before touching the host — a page on another origin gets no channel at all.
+- `POST /api/runner/start` is rejected for a foreign `Origin` (HTTP 403). The
+  start arrives through the host, which sends no browser `Origin`, so a public
+  page can read status but cannot start anything on its own.
 - The runner binds to `127.0.0.1` and answers CORS only for `localhost`,
   `127.0.0.1` and `https://*.vercel.app`. If you serve the site from your own
   domain, add it explicitly: `RUNNER_ALLOWED_ORIGINS=https://osint.example.com`.

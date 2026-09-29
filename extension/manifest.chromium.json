@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "OSINT Portal — локальные утилиты",
-  "version": "1.0.0",
-  "description": "Даёт сайту доступ к локальным OSINT-утилитам через нативный помощник. Без него утилиты не запускаются.",
+  "name": "OSINT Portal Connector",
+  "version": "1.1.0",
+  "description": "Коннектор OSINT Portal: соединяет сайт с локальными OSINT-утилитами на вашем компьютере. Без него утилиты не запускаются.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtDYxHJF2o4mzeNgrufzM7zzt3n1jKpDp9MIsiXfgR4EU+X8Vzxz/jhphGl21mn984zRb6D3JPQPCnSyCczh/4mlEMiJt6Kvs2r2y1d2exowHif/+C6STQrBHSBBsB1jSymnAs0lmmwPyjfmjo8Jm6BAFezff4lMoE4Imp6gHXJQvfOgl2LU2RvDxQf1h7u+dbLa/cH8Sp37mdBVo2BT1prrjROptA45MGpCntozdFEGb/XABRz+BP5hiEbc1bpm4QtO09qXJsJ4yYNm0scXBgzT/WUtG0ZLlrcjqWqO87ktzQNVJLsh/5KwZIZaa5MqlnOZzxrCWslDIzbK1Dhx4OQIDAQAB",
   "permissions": ["nativeMessaging"],
   "host_permissions": ["http://127.0.0.1:8788/*", "http://127.0.0.1:8787/*"],

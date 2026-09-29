@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
- * Native messaging host for the OSINT Portal browser extension.
+ * Native messaging host for the OSINT Portal Connector.
  *
- * This is the process the browser launches on demand when the portal asks for
- * it. It exists because a web page can never start a local process by itself:
- * the browser has to vouch for a locally installed binary, and that binary is
- * this file, registered in the browser's NativeMessagingHosts directory.
+ * The connector is the extension plus this file. This is the process the
+ * browser launches on demand when the portal asks for it. It exists because a
+ * web page can never start a local process by itself: the browser has to vouch
+ * for a locally installed binary, and that binary is this file, registered in
+ * the browser's NativeMessagingHosts directory.
  *
  * Two jobs, and deliberately nothing else:
  *

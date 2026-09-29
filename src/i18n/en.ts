@@ -83,7 +83,7 @@ export const en = {
     targetRequired: "target required — type an IP, hostname, username or URL.",
     networkError: "request failed — is the dev server running?",
     runnerOffline:
-      "the tool runner is not answering. This computer needs the local helper: run `npm run helper:install` once, then press “Start tools” above. Installing nmap alone is not enough.",
+      "the tool runner is not answering. This computer needs the connector: run its installer once and reload the page. Installing nmap alone is not enough.",
     unparseable: "unparseable server response",
     related: "related tools",
     statusOk: "ok",
@@ -123,15 +123,13 @@ export const en = {
   runner: {
     whyTitle: "Tools run on your own computer",
     whyBody:
-      "A website cannot start a program on your machine, so a local helper does it — and it only acts after you confirm on its own page.",
-    openHelper: "Start the tools",
+      "A website cannot start a program on your machine. The connector does, and it is installed in your browser — installing it is the permission.",
     checking: "checking…",
-    helperReady: "helper is there — press the button",
-    helperSilent: "helper is not responding",
-    absentFirst: "This computer has no helper yet. Install it once:",
-    manualLink: "Check manually:",
+    helperSilent: "connector is not responding",
+    absentFirst:
+      "This computer has no connector yet. Run its installer once, then reload this page.",
     absentSecond:
-      "Already installed? Then allow this site local network access in the address bar and reload the page.",
+      "Already installed? Then make sure the connector is enabled in your browser's extension settings.",
     runnerError: "runner",
   },
   pipeline: {
