@@ -180,6 +180,47 @@ export function installNativeHost(
   return result;
 }
 
+/**
+ * Make sure the host file is executable, and report what had to change.
+ *
+ * This is not cosmetic. The native messaging manifest points at `host.js`
+ * itself, and the browser runs that path — there is no interpreter named in the
+ * manifest to fall back on, so a host file without the executable bit is a
+ * registration the browser silently cannot use.
+ *
+ * The bit is easy to lose without anyone noticing: an archive written without
+ * Unix modes, a copy onto FAT/exFAT, a restore from a backup that stored only
+ * contents. The installer calls this so that a successful install means a
+ * working one.
+ *
+ * Windows has no executable bit and launches the host through its file
+ * association, so there this reports success without touching anything.
+ */
+export function ensureHostExecutable(
+  hostPath: string,
+  platform: Platform = process.platform as Platform,
+): { ok: boolean; detail: string; changed: boolean } {
+  if (platform === "win32") {
+    return { ok: true, detail: "не требуется на Windows", changed: false };
+  }
+  try {
+    if ((fs.statSync(hostPath).mode & 0o111) === 0o111) {
+      return { ok: true, detail: "уже установлены", changed: false };
+    }
+    fs.chmodSync(hostPath, 0o755);
+    const nowExecutable = (fs.statSync(hostPath).mode & 0o111) === 0o111;
+    return nowExecutable
+      ? { ok: true, detail: "восстановлены", changed: true }
+      : { ok: false, detail: "не удалось установить", changed: false };
+  } catch (error) {
+    return {
+      ok: false,
+      detail: error instanceof Error ? error.message : String(error),
+      changed: false,
+    };
+  }
+}
+
 export function removeNativeHost(
   overrides: Partial<BrowserOptions> = {},
   reg: RegRunner = defaultRegRunner,

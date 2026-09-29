@@ -20,7 +20,7 @@ import {
   buildExtension,
 } from "./extension-build.ts";
 import { detectOs, installAutostart, removeAutostart } from "./autostart.ts";
-import { HOST_NAME, installNativeHost, removeNativeHost } from "./nativehost.ts";
+import { ensureHostExecutable, HOST_NAME, installNativeHost, removeNativeHost } from "./nativehost.ts";
 import { writeHostConfig } from "./hostconfig.ts";
 import { describeLaunch, isDependencyFree } from "./runtime.ts";
 import { projectPath } from "./root.ts";
@@ -54,6 +54,14 @@ async function main(): Promise<void> {
   const ids = builtIds();
   line("расширение собрано", true, built.map((b) => b.browser).join(", "));
   line("запуск", true, describeLaunch());
+
+  // The browser executes this file directly — the manifest points at it, not at
+  // an interpreter — so the executable bit is load-bearing. An archive that
+  // dropped it, a FAT/exFAT USB copy, or a restore from a backup without modes
+  // would leave a registration the browser cannot use, with the installer
+  // reporting success. Fix it here, where success means something.
+  const hostMode = ensureHostExecutable(HOST_PATH);
+  line("права на host.js", hostMode.ok, hostMode.detail);
 
   const config = writeHostConfig(HOST_PATH);
   line("конфиг нативного хоста", config.ok, config.message);
