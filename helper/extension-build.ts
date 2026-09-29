@@ -104,7 +104,23 @@ function main(): void {
   process.stdout.write("  Загрузите папку в браузере: Настройки → Расширения → Режим разработчика → Загрузить распакованное.\n\n");
 }
 
-// `require` does not exist when Node runs this file as an ES module, which is
-// now the normal path; the guard keeps the tsx fallback working too.
-const isDirectRun = typeof require !== "undefined" && require.main === module;
-if (isDirectRun) main();
+/**
+ * Whether this file was the process entry point.
+ *
+ * This used to be `require.main === module`, which is only true when the file
+ * is loaded as CommonJS. Under Node's native TypeScript path — the one this
+ * project prefers, because it needs no dependencies — the file is an ES module,
+ * `require` does not exist, the guard was false, and the script exited 0 having
+ * built nothing. A build command that reports success and produces no output is
+ * worse than one that fails, so the check looks at the entry path in argv
+ * instead, which is the same under both module systems.
+ *
+ * The installer imports `buildExtension` directly, and its own argv ends in
+ * `install.ts`, so importing this file still does not run a build.
+ */
+function isDirectRun(): boolean {
+  const entry = process.argv[1];
+  return typeof entry === "string" && entry.endsWith("extension-build.ts");
+}
+
+if (isDirectRun()) main();
