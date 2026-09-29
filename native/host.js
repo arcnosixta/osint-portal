@@ -47,7 +47,6 @@ const LOOPBACK = "127.0.0.1";
  */
 const ROUTES = [
   { prefix: "/api/status", port: HELPER_PORT },
-  { prefix: "/api/runner/health", port: HELPER_PORT },
   { prefix: "/api/runner/start", port: HELPER_PORT },
   { prefix: "/api/runner/stop", port: HELPER_PORT },
   { prefix: "/api/tools", port: RUNNER_PORT },

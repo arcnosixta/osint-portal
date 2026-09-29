@@ -580,9 +580,9 @@ the request no longer travels from a public page to a loopback address.
 Nothing starts at login, because nothing needs to: the connector launches the
 host when the site asks, and the host starts the helper only if the helper is
 not already listening. The helper and runner are left running once started and
-keep their evidence in `runner/evidence.json`; `POST /api/runner/stop` stops a
-runner this helper started. If you would rather have them up at login anyway,
-pass the flag: `./install.sh autostart`.
+keep their evidence in `.osint-portal/evidence.json`; `POST /api/runner/stop`
+stops a runner this helper started. If you would rather have them up at login
+anyway, pass the flag: `./install.sh autostart`.
 
 > **Why an extension.** Chrome will not let a public HTTPS page touch
 > `127.0.0.1` until you grant local-network access, and it has tightened that
