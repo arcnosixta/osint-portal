@@ -126,9 +126,12 @@ export const en = {
       "A website cannot start a program on your machine, so a local helper does it — and it only acts after you confirm on its own page.",
     openHelper: "Start the tools",
     checking: "checking…",
-    helperMissing: "helper is not responding",
-    helperBlocked:
-      "the browser is blocking this site from the local network — allow local network access in the address bar and the button will find the helper",
+    helperReady: "helper is there — press the button",
+    helperSilent: "helper is not responding",
+    absentFirst: "This computer has no helper yet. Install it once:",
+    manualLink: "Check manually:",
+    absentSecond:
+      "Already installed? Then allow this site local network access in the address bar and reload the page.",
     runnerError: "runner",
   },
   pipeline: {
