@@ -8,6 +8,27 @@ plus a native messaging host. Its version is the one in
 `extension/manifest.chromium.json` and `extension/manifest.firefox.json`, and
 this repository carries the same number.
 
+## [1.1.1] — 2026-09-29
+
+Three fixes, all found while packaging the connector as a downloadable
+artifact and running the result the way a user would. None of them broke the
+installer, which is why all three shipped inside 1.1.0.
+
+### Fixed
+
+- `node helper/extension-build.ts` exited 0 and built nothing on the
+  dependency-free runtime this project prefers. The entry point was detected
+  with `require.main === module`, which is false when Node loads the file as an
+  ES module, so `main()` never ran. The tsx fallback still worked, which is why
+  it went unnoticed. Importing the module still does not build, so the
+  installer is unaffected.
+- The host forwarded `/api/runner/health` to the helper, which has no such
+  route. Nothing ever requested that path, so the entry could only produce a
+  404 while looking like a working route in the allow-list.
+- The README put the evidence file at `runner/evidence.json`; it is
+  `.osint-portal/evidence.json`, as the two other places in the README already
+  said.
+
 ## [1.1.0] — 2026-09-29
 
 The connector gets a name, and setup stops needing a package manager.
