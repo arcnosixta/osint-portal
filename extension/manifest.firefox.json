@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "OSINT Portal — локальные утилиты",
+  "version": "1.0.0",
+  "description": "Даёт сайту доступ к локальным OSINT-утилитам через нативный помощник. Без него утилиты не запускаются.",
+  "permissions": ["nativeMessaging"],
+  "host_permissions": ["http://127.0.0.1:8788/*", "http://127.0.0.1:8787/*"],
+  "background": { "scripts": ["background.js"] },
+  "content_scripts": [
+    {
+      "matches": ["https://osint-portal-gamma.vercel.app/*", "http://localhost:3000/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}

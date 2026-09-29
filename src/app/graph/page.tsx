@@ -14,7 +14,8 @@ import GraphCanvas, { NODE_COLORS, NODE_TYPES } from "@/components/graph/GraphCa
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { gsap } from "@/lib/animations";
 import { cn } from "@/lib/utils";
-import { runnerApi, runnerEnabled } from "@/lib/runner-client";
+import { localRequest } from "@/lib/local";
+import { runnerEnabled } from "@/lib/runner-client";
 import type { EntityType } from "@/lib/graph";
 
 interface GraphPayload {
@@ -93,7 +94,7 @@ const load = useCallback(
   async (opts?: { silent?: boolean }) => {
     if (!opts?.silent) setBusy(true);
     try {
-      const res = await fetch(runnerApi("/api/graph"), { cache: "no-store" });
+      const res = await localRequest("/api/graph");
       const json = (await res.json()) as GraphPayload;
       if (!res.ok || !json.ok) throw new Error("bad response");
       if (json.count > 0) {
@@ -129,7 +130,7 @@ const load = useCallback(
 
 useEffect(() => {
   let alive = true;
-  fetch(runnerApi("/api/graph"), { cache: "no-store" })
+  localRequest("/api/graph")
     .then((res) => res.json())
     .then((json: GraphPayload) => {
       if (!alive) return;
@@ -166,7 +167,7 @@ useEffect(() => {
 const clearEvidence = useCallback(async () => {
   setBusy(true);
   try {
-    await fetch(runnerApi("/api/evidence"), { method: "DELETE" });
+    await localRequest("/api/evidence", { method: "DELETE" });
     removeLocal(GRAPH_KEY);
     removeLocal(LAYOUT_KEY);
     cached.current = null;

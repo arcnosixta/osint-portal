@@ -521,9 +521,8 @@ Anya on the offline brain while each visitor brings their own key.
 ### 2. Install the local helper (once per machine)
 
 A web page cannot start a process, and a cloud deployment cannot reach your PC.
-So the **helper** runs on your machine: it keeps the runner supervised and, on
-your explicit confirmation, starts the tools. The website can *see* the helper
-but cannot press the button for you.
+So a **helper** runs on your machine and owns the tools. The extension below is
+what lets the site reach it without you touching a terminal.
 
 ```bash
 git clone https://github.com/arcnosixta/osint-portal.git
@@ -533,35 +532,58 @@ npm run helper:install
 
 That single command:
 
-- registers the `osint-runner://` browser scheme;
-- installs an autostart entry — a systemd **user** unit on Linux
-  (`~/.config/systemd/user/`), a LaunchAgent on macOS, or a
-  `Startup` shortcut on Windows — so the helper is up after you log in;
-- starts the helper right away.
+- builds the browser extension into `extension/dist/chrome` and
+  `extension/dist/firefox`;
+- writes `native/host.config.json`, which tells the host how to start the helper;
+- registers the **native messaging host** with every Chromium and Gecko browser
+  it finds on this machine, pinned to this extension's id;
+- registers the `osint-runner://` scheme and an autostart entry, so the helper
+  is also up after you log in even without the extension.
 
-Check or undo it with `npm run helper:install` again, `npm run helper:install --
-uninstall`, or the **Автозапуск** button on the control page.
+It prints the extension id and the folder to load. Check or undo it with
+`npm run helper:install` again or `npm run helper:install -- uninstall`.
 
-> **The browser will ask once.** A site served over HTTPS counts as a *public*
-> origin, and Chrome/Edge will not let it touch `127.0.0.1` until you allow
-> local-network access for that site (the prompt appears in the address bar).
-> Accept it and the button finds the helper by itself. Locally, at
-> `http://localhost:3000`, there is nothing to approve.
+**Load the extension — one click, once.** In Chrome or Edge: `Настройки →
+Расширения → включить Режим разработчика → Загрузить распакованное` and pick
+`extension/dist/chrome`. In Firefox: `about:debugging#/runtime/this-firefox →
+Загрузить временное дополнение` and pick `extension/dist/firefox/manifest.json`.
 
-Then, on the site: **«Запустить утилиты»** opens
-`http://127.0.0.1:8788`, a control page bound to loopback only. Press **«Запустить
-утилиты»** there. The site button then disappears on its own, because the
-status probe sees the runner online.
+That is the whole setup. After it the site starts the tools on its own: the page
+asks the extension, the browser launches the native host, the host starts the
+helper, and the helper starts the runner. No terminal, no login item, no local
+page to visit, no button to press — and no Local Network Access prompt, because
+the request no longer travels from a public page to a loopback address.
+
+Check or undo the registration with `npm run helper:install` again,
+`npm run helper:install -- uninstall`, or the **Автозапуск** button on the
+control page.
+
+> **Why an extension.** Chrome will not let a public HTTPS page touch
+> `127.0.0.1` until you grant local-network access, and it has tightened that
+> gate repeatedly; a prompt per site is a poor answer for a tool that should
+> just work. Browser → extension → native host is a channel the browser already
+> trusts and does not treat as local-network access, and it gives the browser a
+> way to launch a *registered* local binary, which a page can never do.
+>
+> **One step cannot be automated.** A browser only launches a native host that a
+> manifest points at, and the manifest is a file the installer writes. Registering
+> it is the single thing left for a human — everything after it is automatic.
+
+The extension only injects itself on `https://osint-portal-gamma.vercel.app` and
+`http://localhost:3000`, and the background script re-checks the sender origin
+before touching the host. The host itself forwards only `/api/status`,
+`/api/runner/*`, `/api/tools`, `/api/graph` and `/api/evidence`, to the two
+loopback ports and nowhere else.
 
 ```
 visitor's browser ──► Vercel (UI, static assets, offline-brain /api/anya)
-       │
-       ├── status probe ──► 127.0.0.1:8788  helper  ── is it up?
-       └── tool calls    ──► 127.0.0.1:8787  runner  ──► binaries
-                                                          └─► .osint-portal/evidence.json
+        │
+        └── page ──postMessage──► extension ──native messaging──► host ──► helper :8788 ──► runner :8787 ──► binaries
+                                    (only our origin)            (path allow-list)                                       └─► evidence.json
 ```
 
 ### 3. What the helper and runner expose
+
 
 Helper (`http://127.0.0.1:8788`):
 

@@ -7,8 +7,13 @@
  * checks the Origin header (see helper/policy.ts).
  */
 
-export const HELPER_PORT = 8788;
-export const HELPER_URL = `http://127.0.0.1:${HELPER_PORT}`;
+import { bridgeAvailable } from "./bridge";
+import { localRequest } from "./local";
+
+export { HELPER_PORT, HELPER_URL, RUNNER_PORT, RUNNER_URL } from "./local-endpoints";
+
+/** Cold start: spawn the host, then the helper, then the runner. */
+const STARTUP_TIMEOUT_MS = 45_000;
 
 export interface HelperStatus {
   helper: { up: boolean; port: number; project: string };
@@ -33,17 +38,44 @@ export interface HelperStatus {
  */
 export async function helperStatus(timeoutMs = 1500): Promise<HelperStatus | null> {
   if (typeof window === "undefined") return null;
+
+  // The extension may have to spawn the helper first, so it gets a real budget
+  // while a direct probe stays short — a missing helper should not stall paint.
+  const viaBridge = bridgeAvailable();
+  const timeout = await viaBridge.then((ok) => (ok ? STARTUP_TIMEOUT_MS : timeoutMs));
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeout);
+
   try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-    const res = await fetch(`${HELPER_URL}/api/status`, {
-      signal: ctrl.signal,
-      cache: "no-store",
-    });
+    const res = await localRequest("/api/status", { signal: ctrl.signal });
     clearTimeout(timer);
     if (!res.ok) return null;
     return (await res.json()) as HelperStatus;
   } catch {
+    clearTimeout(timer);
+    return null;
+  }
+}
+
+/**
+ * Start the runner and wait until it is up.
+ *
+ * With the extension installed this needs nothing from the user: the browser
+ * launches the host, the host starts the helper, and the helper starts the
+ * runner. Installing the extension is the grant, which replaces the previous
+ * "open the local page and click allow" step.
+ */
+export async function startTools(timeoutMs = STARTUP_TIMEOUT_MS): Promise<HelperStatus | null> {
+  if (typeof window === "undefined") return null;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await localRequest("/api/runner/start", { method: "POST", signal: ctrl.signal });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    return (await res.json()) as HelperStatus;
+  } catch {
+    clearTimeout(timer);
     return null;
   }
 }

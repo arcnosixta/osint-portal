@@ -43,3 +43,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Собираются установщиком, зависят от машины
+extension/dist/
+native/host.config.json

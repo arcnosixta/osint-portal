@@ -10,7 +10,8 @@
     "test": "tsx --test \"src/lib/**/*.test.ts\" \"runner/**/*.test.ts\" \"helper/**/*.test.ts\"",
     "runner": "tsx runner/server.ts",
     "helper": "tsx helper/agent.ts",
-    "helper:install": "tsx helper/install.ts"
+    "helper:install": "tsx helper/install.ts",
+    "extension:build": "tsx helper/extension-build.ts"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

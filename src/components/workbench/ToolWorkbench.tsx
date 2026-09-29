@@ -22,7 +22,8 @@ import { getWorkbench } from "@/lib/workbench";
 import { TOOL_CATEGORIES, TOOLS, type Tool, type ToolStatus } from "@/lib/tools";
 import { cn } from "@/lib/utils";
 import { sleep } from "@/lib/utils";
-import { runnerApi, runnerEnabled } from "@/lib/runner-client";
+import { localRequest } from "@/lib/local";
+import { runnerEnabled } from "@/lib/runner-client";
 import { StartToolsButton } from "@/components/workbench/StartToolsButton";
 import ResultView from "./ResultView";
 
@@ -154,7 +155,7 @@ export default function ToolWorkbench({
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 1500);
 
-    void fetch(runnerApi("/api/tools"), { signal: ctrl.signal, cache: "no-store" })
+    void localRequest("/api/tools", { signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { tools?: { id: string; available: boolean | null }[]; localCount?: number } | null) => {
         clearTimeout(timer);
@@ -268,10 +269,9 @@ export default function ToolWorkbench({
     const doFetch = async () => {
       let res: Response;
       try {
-        res = await fetch(runnerApi(`/api/tools/${tool.id}`), {
+        res = await localRequest(`/api/tools/${tool.id}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ target: tgt, args }),
+          body: { target: tgt, args },
         });
       } catch {
         if (runIdRef.current !== id) return;
