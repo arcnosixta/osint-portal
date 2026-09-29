@@ -15,13 +15,14 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { runArgs } from "./runtime.ts";
 import {
   HELPER_HOST,
   HELPER_PORT,
   RUNNER_PORT,
   isControlOrigin,
-} from "./policy";
-import { installAutostart, isAutostartEnabled, removeAutostart, detectOs } from "./autostart";
+} from "./policy.ts";
+import { installAutostart, isAutostartEnabled, removeAutostart, detectOs } from "./autostart.ts";
 
 const PROJECT_ROOT = process.cwd();
 const RUNNER_ENTRY = join(PROJECT_ROOT, "runner", "server.ts");
@@ -48,7 +49,7 @@ async function probeRunner(): Promise<{ up: boolean; health: unknown; error?: st
 function startRunner(): void {
   if (runner && !runner.killed) return;
   runnerStartedAt = Date.now();
-  runner = spawn(process.execPath, ["--import", "tsx", RUNNER_ENTRY], {
+  runner = spawn(process.execPath, runArgs(RUNNER_ENTRY), {
     cwd: PROJECT_ROOT,
     env: { ...process.env, NODE_ENV: "production" },
     stdio: "ignore",

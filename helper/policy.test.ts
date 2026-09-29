@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { isControlOrigin, isProbeRequest, HELPER_PORT, RUNNER_PORT } from "./policy";
+import { isControlOrigin, isProbeRequest, HELPER_PORT, RUNNER_PORT } from "./policy.ts";
 
 /**
  * The helper can start binaries, so these tests pin the one rule that keeps a

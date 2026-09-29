@@ -20,9 +20,15 @@ shell-free API. Results come back as structured tables and a live-console log.
 
 ## What's new
 
-- **Public deploy + local tools.** `npm run helper:install` watches the tools and a
+- **One install file, no terminal.** `./install.sh`, `./install.command` or
+  `install.ps1` register the native host for every browser on the machine, then
+  the site drives the tools from the browser: the page asks the extension, the
+  browser starts the helper, the helper starts the runner. Node 23.5+ runs all of
+  it straight from the source, so `npm install` is not needed to use the tools.
+  See *Deploying the site*.
+- **Public deploy + local tools.** The helper watches the tools and a
   disk-backed case file on `127.0.0.1`; the site (Vercel or local) drives it from
-  the browser. Evidence and the graph survive restarts. See *Deploying the site*.
+  the browser. Evidence and the graph survive restarts.
 - **Bring your own AI key.** Visitors pick a provider and paste their key in the
   chat; it is stored in that browser and the provider is called from the page,
   never through the site — so a public deployment costs the owner nothing.
@@ -526,9 +532,17 @@ what lets the site reach it without you touching a terminal.
 
 ```bash
 git clone https://github.com/arcnosixta/osint-portal.git
-cd osint-portal && npm install
-npm run helper:install
+cd osint-portal
 ```
+
+Now run the installer for your platform — it needs only Node.js 20 or newer, and
+`npm install` is not required:
+
+| Platform | Run |
+|---|---|
+| Linux | `./install.sh` |
+| macOS | `./install.command` (double-click in Finder) |
+| Windows | `install.ps1` (right-click → Run with PowerShell) |
 
 That single command:
 
@@ -536,17 +550,21 @@ That single command:
   `extension/dist/firefox`;
 - writes `native/host.config.json`, which tells the host how to start the helper;
 - registers the **native messaging host** with every Chromium and Gecko browser
-  it finds on this machine, pinned to this extension's id;
-- registers the `osint-runner://` scheme and an autostart entry, so the helper
-  is also up after you log in even without the extension.
+  it finds on this machine — a file per browser on Linux and macOS, an `HKCU`
+  registry value per browser on Windows, each pinned to this extension's id.
 
-It prints the extension id and the folder to load. Check or undo it with
-`npm run helper:install` again or `npm run helper:install -- uninstall`.
+It prints the extension id and the folder to load. Re-run it to repair, or undo
+it with `./install.sh uninstall` (`npm run helper:uninstall`).
 
 **Load the extension — one click, once.** In Chrome or Edge: `Настройки →
 Расширения → включить Режим разработчика → Загрузить распакованное` and pick
 `extension/dist/chrome`. In Firefox: `about:debugging#/runtime/this-firefox →
 Загрузить временное дополнение` and pick `extension/dist/firefox/manifest.json`.
+
+> `npm install` is only needed to work on the site itself (`npm run dev`,
+> `npm run build`) or on an old Node. On Node 23.5+ the helper, the runner and
+> the installer run straight from the source with no dependencies, which is why
+> the manifest can be repaired by a user who never installed anything.
 
 That is the whole setup. After it the site starts the tools on its own: the page
 asks the extension, the browser launches the native host, the host starts the
@@ -554,9 +572,10 @@ helper, and the helper starts the runner. No terminal, no login item, no local
 page to visit, no button to press — and no Local Network Access prompt, because
 the request no longer travels from a public page to a loopback address.
 
-Check or undo the registration with `npm run helper:install` again,
-`npm run helper:install -- uninstall`, or the **Автозапуск** button on the
-control page.
+The helper lives only while the browser keeps it alive, which is the point: a
+process that nothing starts and nothing stops is a process you have to reason
+about later. If you would rather have it up at login anyway, pass the flag:
+`./install.sh autostart`.
 
 > **Why an extension.** Chrome will not let a public HTTPS page touch
 > `127.0.0.1` until you grant local-network access, and it has tightened that
@@ -566,8 +585,10 @@ control page.
 > way to launch a *registered* local binary, which a page can never do.
 >
 > **One step cannot be automated.** A browser only launches a native host that a
-> manifest points at, and the manifest is a file the installer writes. Registering
-> it is the single thing left for a human — everything after it is automatic.
+> manifest points at, and the manifest is a file the installer writes. Installing
+> the extension is the one thing left for a human — everything after it is
+> automatic. Publishing the extension unlisted to the Chrome Web Store and Edge
+> Add-ons removes developer mode and survives updates, at the cost of a review.
 
 The extension only injects itself on `https://osint-portal-gamma.vercel.app` and
 `http://localhost:3000`, and the background script re-checks the sender origin
@@ -627,8 +648,9 @@ Runner (`http://127.0.0.1:8787`):
 
 That is expected and not a bug: the catalog on Vercel cannot see the binaries.
 The workbench and `/graph` call the runner, so they work as long as the helper
-and runner are up on the same machine as the browser. If a run fails, the UI
-shows `npm run helper:install` as the fix.
+and runner are up on the same machine as the browser. If a run fails, re-run the
+installer for your platform (`./install.sh`, `./install.command`, `install.ps1`)
+and check that the extension is still enabled — that is the fix it prints.
 
 ---
 

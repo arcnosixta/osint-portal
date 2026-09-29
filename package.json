@@ -11,6 +11,8 @@
     "runner": "tsx runner/server.ts",
     "helper": "tsx helper/agent.ts",
     "helper:install": "tsx helper/install.ts",
+    "helper:uninstall": "tsx helper/install.ts uninstall",
+    "helper:install:node": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON helper/install.ts",
     "extension:build": "tsx helper/extension-build.ts"
   },
   "dependencies": {
@@ -29,7 +31,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^24.19.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

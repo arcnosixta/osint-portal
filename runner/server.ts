@@ -1,10 +1,10 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { runTool } from "../src/lib/executor";
-import { setEvidenceBackend, listEvidence, clearEvidence, evidenceCount, evidenceSource } from "../src/lib/evidence";
-import { buildGraph } from "../src/lib/graph";
-import { detectLocalToolStatus, isBinaryAvailable } from "../src/lib/binary";
-import { TOOLS } from "../src/lib/tools";
-import { createFileBackend, defaultCaseFile } from "./store";
+import { runTool } from "../src/lib/executor.ts";
+import { setEvidenceBackend, listEvidence, clearEvidence, evidenceCount, evidenceSource } from "../src/lib/evidence.ts";
+import { buildGraph } from "../src/lib/graph.ts";
+import { detectLocalToolStatus, isBinaryAvailable } from "../src/lib/binary.ts";
+import { TOOLS } from "../src/lib/tools.ts";
+import { createFileBackend, defaultCaseFile } from "./store.ts";
 
 /**
  * Local tool runner.

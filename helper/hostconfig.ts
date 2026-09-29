@@ -11,29 +11,26 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { isDependencyFree, launchCommand } from "./runtime.ts";
 
 export interface HostConfigResult {
   ok: boolean;
   message: string;
 }
 
-export function writeHostConfig(hostPath: string, platform = process.platform): HostConfigResult {
-  const dir = path.dirname(hostPath);
-  const configPath = path.join(dir, "host.config.json");
-  const projectRoot = path.resolve(dir, "..");
+export function writeHostConfig(hostPath: string): HostConfigResult {
+  const configPath = path.join(path.dirname(hostPath), "host.config.json");
+  const projectRoot = path.resolve(path.dirname(hostPath), "..");
 
-  // tsx runs the TypeScript helper directly, which keeps a single source of
-  // truth: there is no compiled copy of the helper to fall out of date.
-  const isWindows = platform === "win32";
-  const config = {
-    command: isWindows ? "npx.cmd" : "npx",
-    args: ["tsx", "helper/agent.ts"],
-    cwd: projectRoot,
-  };
+  // Node runs the TypeScript helper directly on anything recent, so a fresh
+  // machine needs no node_modules at all. The entry is given as an absolute
+  // path because the host may be started from any working directory.
+  const { command, args } = launchCommand(path.join(projectRoot, "helper", "agent.ts"));
+  const config = { command, args, cwd: projectRoot };
 
   try {
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n", "utf8");
-    return { ok: true, message: configPath };
+    return { ok: true, message: `${configPath}${isDependencyFree() ? "" : " (нужен npm install: tsx)"}` };
   } catch (error) {
     return { ok: false, message: String(error) };
   }

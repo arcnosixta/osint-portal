@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { runArgs } from "./runtime.ts";
 
 /**
  * Autostart for the local helper.
@@ -51,11 +52,13 @@ function agentEntry(): string {
 
 /**
  * Autostart launches the *helper*, not the runner: the helper is what keeps
- * the control page reachable, so the website's "start tools" button always has
- * something to talk to, and the permission step always has a place to live.
+ * the control page reachable, so a user who wants it always up has something to
+ * talk to. It is opt-in, because the extension starts the helper on demand and
+ * a background process nobody asked for is just a process that can outlive the
+ * session that needed it.
  */
 export function autostartCommand(): string {
-  return `${nodeBin()} --import tsx ${agentEntry()}`;
+  return [nodeBin(), ...runArgs(agentEntry())].join(" ");
 }
 
 function systemdUnit(): string {
@@ -89,9 +92,7 @@ function launchAgentPlist(): string {
     "  <key>ProgramArguments</key>",
     "  <array>",
     `    <string>${nodeBin()}</string>`,
-    "    <string>--import</string>",
-    "    <string>tsx</string>",
-    `    <string>${agentEntry()}</string>`,
+    ...runArgs(agentEntry()).map((arg) => `    <string>${arg}</string>`),
     "  </array>",
     `  <key>WorkingDirectory</key>`,
     `  <string>${projectRoot()}</string>`,
@@ -109,7 +110,7 @@ function windowsCmd(): string {
   return [
     "@echo off",
     `cd /d "${projectRoot()}"`,
-    `start "" "${nodeBin()}" --import tsx "${agentEntry()}"`,
+    `start "" "${nodeBin()}" ${runArgs(agentEntry()).join(" ")}`,
     "",
   ].join("\r\n");
 }

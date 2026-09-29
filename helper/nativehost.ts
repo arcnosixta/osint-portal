@@ -1,103 +1,52 @@
 /**
  * Registration of the native messaging host.
  *
- * A browser will only launch a local binary that it has a manifest for, and it
- * only looks in its own profile directory. This module writes that manifest for
- * every Chromium and Gecko browser it can find, so the extension works without
- * the user hunting for the right path.
+ * A browser will only launch a local binary that it has a manifest for. This
+ * module writes that manifest for every Chromium and Gecko browser it can find,
+ * so the extension works without the user hunting for the right path.
  *
- * Two details that are easy to get wrong and expensive to debug:
+ * The rules that are easy to get wrong, and what they cost when they are:
  *
- *  - the host name must be a plain slug. Chromium rejects some punctuation, and
- *    it reports the failure as "invalid host name" with no hint about the file.
- *  - `allowed_origins` pins the extension id. Without it any installed
- *    extension could drive the host, which is exactly the hole the whole
- *    design is meant to close.
+ *  - The host name must be a plain slug. Chromium rejects some punctuation and
+ *    reports only "invalid host name", with no hint about the file.
+ *  - The allow-list field is engine-specific: `allowed_origins` for Chromium,
+ *    `allowed_extensions` for Gecko. Writing the Chromium field for Firefox
+ *    produces a manifest Firefox rejects.
+ *  - Omitting the allow-list entirely is worse than writing a wrong one: it
+ *    tells the browser that *any* installed extension may drive this host. So a
+ *    manifest without an id is refused rather than written.
+ *  - On Windows both engines read a registry value, not a directory.
  */
 
-import crypto from "node:crypto";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
-import os from "node:os";
+import { homedir } from "node:os";
 import path from "node:path";
+import {
+  isInstalled,
+  manifestPathFor,
+  platformBrowsers,
+  type BrowserOptions,
+  type BrowserSpec,
+  type Engine,
+  type Platform,
+  type PlatformEnv,
+} from "./browsers.ts";
 
 /** Must match HOST_NAME in extension/background.js. */
 export const HOST_NAME = "osintportalhelper";
 
-/** A browser we know how to register with, before the manifest path is built. */
-interface BrowserDir {
-  browser: string;
-  dir: string;
+/** The ids the browser will use, read out of the built extension manifests. */
+export interface HostIds {
+  chromium: string;
+  gecko: string | null;
 }
 
 export interface HostTarget {
   browser: string;
+  engine: Engine;
   manifest: string;
-}
-
-function chromiumTargets(): BrowserDir[] {
-  const home = os.homedir();
-  return [
-    { browser: "Google Chrome", dir: ".config/google-chrome" },
-    { browser: "Chromium", dir: ".config/chromium" },
-    { browser: "Microsoft Edge", dir: ".config/microsoft-edge" },
-    { browser: "Brave", dir: ".config/BraveSoftware/Brave-Browser" },
-    { browser: "Vivaldi", dir: ".config/vivaldi" },
-  ].map(({ browser, dir }) => ({
-    browser,
-    dir: path.join(home, dir, "NativeMessagingHosts"),
-  }));
-}
-
-function geckoTargets(): BrowserDir[] {
-  const home = os.homedir();
-  const app = process.platform === "darwin" ? "Library/Application Support/Mozilla/NativeMessagingHosts" : ".mozilla/native-messaging-hosts";
-  return [
-    { browser: "Firefox", dir: path.join(home, app) },
-    // Gecko also reads a per-profile directory, which covers installs that
-    // never touch the application-level one.
-    { browser: "Firefox (профиль)", dir: path.join(home, ".mozilla/firefox/Default/native-messaging-hosts") },
-  ];
-}
-
-/**
- * Every browser this machine could use, with the directory the browser itself
- * reads. Directories that do not exist are skipped later, which is how we tell
- * an installed browser from one that is merely supported.
- */
-/**
- * The extension id Chromium derives from an unpacked directory.
- *
- * It hashes the absolute path, so the id is stable for a given checkout and
- * predictable ahead of time. That is what lets the installer write
- * allowed_origins without the user having to copy an id out of a settings page:
- * the number the browser will use is the one we compute here.
- */
-export function extensionIdFromPath(extensionDir: string): string {
-  const digest = crypto.createHash("sha256").update(path.resolve(extensionDir), "utf8").digest("hex");
-  return digest
-    .slice(0, 32)
-    .split("")
-    .map((c) => String.fromCharCode(97 + parseInt(c, 16)))
-    .join("");
-}
-
-export function targetDirs(platform = process.platform): HostTarget[] {
-  const macSupport = path.join(os.homedir(), "Library", "Application Support");
-  const toMac = (dirs: BrowserDir[]): BrowserDir[] =>
-    dirs.map((t) => ({
-      ...t,
-      dir: t.dir.replace(path.join(os.homedir(), ".config"), macSupport),
-    }));
-
-  const targets: BrowserDir[] =
-    platform === "darwin"
-      ? [...geckoTargets(), ...toMac(chromiumTargets())]
-      : [...chromiumTargets(), ...geckoTargets()];
-
-  return targets.map((t) => ({
-    browser: t.browser,
-    manifest: path.join(t.dir, `${HOST_NAME}.json`),
-  }));
+  registryKey?: string;
 }
 
 export interface InstallResult {
@@ -106,59 +55,149 @@ export interface InstallResult {
   errors: { target: HostTarget; message: string }[];
 }
 
-function exists(target: HostTarget): boolean {
-  try {
-    return fs.existsSync(path.dirname(target.manifest));
-  } catch {
-    return false;
-  }
+export type RegRunner = (args: string[]) => { ok: boolean; out: string };
+
+const defaultRegRunner: RegRunner = (args) => {
+  const r = spawnSync("reg.exe", args, { encoding: "utf8" });
+  return { ok: r.status === 0, out: `${r.stdout ?? ""}${r.stderr ?? ""}`.trim() };
+};
+
+function env(): PlatformEnv {
+  return {
+    home: homedir(),
+    localAppData: process.env.LOCALAPPDATA,
+    appData: process.env.APPDATA,
+  };
 }
 
-/**
- * Write the host manifest into every browser profile directory that exists.
- *
- * `extensions` is a list of allowed extension ids. It may be empty when the
- * user has not recorded an id yet, in which case the manifest is written
- * without `allowed_origins` and the helper still works, but the browser will
- * refuse the connection — the extension reports that as "host unavailable" and
- * the user can run the installer again after the id is known.
- */
-export function installNativeHost(
-  hostPath: string,
-  extensions: string[] = [],
-  extensionDir?: string,
-): InstallResult {
-  const allowed = extensionDir ? [extensionIdFromPath(extensionDir)] : extensions;
-  const result: InstallResult = { installed: [], skipped: [], errors: [] };
+function browserOptions(overrides: Partial<BrowserOptions> = {}): BrowserOptions {
+  return { ...env(), hostName: HOST_NAME, ...overrides };
+}
 
-  const manifest: Record<string, unknown> = {
+/** Every browser this machine could use, with the file or registry entry it needs. */
+export function targetDirs(platform: Platform = process.platform as Platform, overrides: Partial<BrowserOptions> = {}): HostTarget[] {
+  return platformBrowsers(browserOptions({ platform, ...overrides })).map((spec) => ({
+    browser: spec.name,
+    engine: spec.engine,
+    manifest: manifestPathFor(spec, HOST_NAME),
+    ...(spec.registryKey ? { registryKey: spec.registryKey } : {}),
+  }));
+}
+
+function present(spec: BrowserSpec): boolean {
+  return isInstalled(spec, (p) => fs.existsSync(p));
+}
+
+/** Write a single manifest, and its registry value on Windows. */
+function writeOne(
+  target: HostTarget,
+  manifest: Record<string, unknown>,
+  reg: RegRunner,
+): { ok: boolean; message?: string } {
+  try {
+    fs.mkdirSync(path.dirname(target.manifest), { recursive: true });
+    fs.writeFileSync(target.manifest, JSON.stringify(manifest, null, 2) + "\n", "utf8");
+  } catch (error) {
+    return { ok: false, message: String(error) };
+  }
+
+  if (!target.registryKey) return { ok: true };
+
+  // Windows: the browser is told where the file is, so the path has to be
+  // absolute and in the backslash form reg.exe stores.
+  const result = reg(["ADD", `HKCU\\${target.registryKey}`, "/ve", "/t", "REG_SZ", "/d", path.resolve(target.manifest), "/f"]);
+  return result.ok ? { ok: true } : { ok: false, message: `реестр: ${result.out || "отказано"}` };
+}
+
+/** What a browser expects to find in a native messaging manifest. */
+type HostManifest = {
+  name: string;
+  description: string;
+  path: string;
+  type: "stdio";
+  allowed_origins?: string[];
+  allowed_extensions?: string[];
+};
+
+function buildManifest(engine: Engine, hostPath: string, ids: HostIds): HostManifest | { error: string } {
+  const base: HostManifest = {
     name: HOST_NAME,
     description: "OSINT Portal local helper",
     path: hostPath,
     type: "stdio",
   };
-  if (allowed.length > 0) manifest.allowed_origins = allowed.map((id) => `chrome-extension://${id}/`);
 
-  for (const target of targetDirs()) {
-    if (!exists(target)) {
+  if (engine === "chromium") {
+    if (!ids.chromium) return { error: "в manifest.json расширения нет поля key, поэтому id неизвестен" };
+    base.allowed_origins = [`chrome-extension://${ids.chromium}/`];
+    return base;
+  }
+
+  if (!ids.gecko) return { error: "в manifest.json расширения нет browser_specific_settings.gecko.id" };
+  base.allowed_extensions = [ids.gecko];
+  return base;
+}
+
+/**
+ * Write the host manifest for every installed browser.
+ *
+ * An id is required per engine: a manifest without one is refused, because the
+ * alternative is a host that answers any extension on the machine.
+ */
+export function installNativeHost(
+  hostPath: string,
+  ids: HostIds,
+  overrides: Partial<BrowserOptions> = {},
+  reg: RegRunner = defaultRegRunner,
+): InstallResult {
+  const options = browserOptions(overrides);
+  const result: InstallResult = { installed: [], skipped: [], errors: [] };
+
+  for (const spec of platformBrowsers(options)) {
+    const target: HostTarget = {
+      browser: spec.name,
+      engine: spec.engine,
+      manifest: manifestPathFor(spec, HOST_NAME),
+      ...(spec.registryKey ? { registryKey: spec.registryKey } : {}),
+    };
+
+    if (!present(spec)) {
       result.skipped.push(target);
       continue;
     }
-    try {
-      fs.mkdirSync(path.dirname(target.manifest), { recursive: true });
-      fs.writeFileSync(target.manifest, JSON.stringify(manifest, null, 2) + "\n", "utf8");
-      result.installed.push(target);
-    } catch (error) {
-      result.errors.push({ target, message: String(error) });
+
+    const manifest = buildManifest(spec.engine, hostPath, ids);
+    if ("error" in manifest) {
+      result.errors.push({ target, message: manifest.error });
+      continue;
     }
+
+    const written = writeOne(target, manifest, reg);
+    if (written.ok) result.installed.push(target);
+    else result.errors.push({ target, message: written.message ?? "неизвестная ошибка" });
   }
 
   return result;
 }
 
-export function removeNativeHost(): HostTarget[] {
+export function removeNativeHost(
+  overrides: Partial<BrowserOptions> = {},
+  reg: RegRunner = defaultRegRunner,
+): HostTarget[] {
   const removed: HostTarget[] = [];
-  for (const target of targetDirs()) {
+
+  for (const spec of platformBrowsers(browserOptions(overrides))) {
+    const target: HostTarget = {
+      browser: spec.name,
+      engine: spec.engine,
+      manifest: manifestPathFor(spec, HOST_NAME),
+      ...(spec.registryKey ? { registryKey: spec.registryKey } : {}),
+    };
+
+    // Registry entries are cleared for every known browser, not only installed
+    // ones: a browser can be uninstalled later and leave its key behind.
+    if (target.registryKey) reg(["DELETE", `HKCU\\${target.registryKey}`, "/f"]);
+
     try {
       if (fs.existsSync(target.manifest)) {
         fs.unlinkSync(target.manifest);
@@ -168,5 +207,6 @@ export function removeNativeHost(): HostTarget[] {
       /* a manifest we cannot delete is reported as still present */
     }
   }
+
   return removed;
 }

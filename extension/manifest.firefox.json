@@ -3,6 +3,12 @@
   "name": "OSINT Portal — локальные утилиты",
   "version": "1.0.0",
   "description": "Даёт сайту доступ к локальным OSINT-утилитам через нативный помощник. Без него утилиты не запускаются.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "osint-portal@local.tools",
+      "strict_min_version": "115.0"
+    }
+  },
   "permissions": ["nativeMessaging"],
   "host_permissions": ["http://127.0.0.1:8788/*", "http://127.0.0.1:8787/*"],
   "background": { "scripts": ["background.js"] },

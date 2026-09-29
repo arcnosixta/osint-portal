@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { EvidenceBackend, EvidenceItem } from "../src/lib/evidence";
+import type { EvidenceBackend, EvidenceItem } from "../src/lib/evidence.ts";
 
 /**
  * Disk-backed case file for the local runner.

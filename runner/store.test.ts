@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createFileBackend, defaultCaseFile } from "./store";
-import type { EvidenceItem } from "../src/lib/evidence";
+import { createFileBackend, defaultCaseFile } from "./store.ts";
+import type { EvidenceItem } from "../src/lib/evidence.ts";
 
 function item(id: string): EvidenceItem {
   return {
