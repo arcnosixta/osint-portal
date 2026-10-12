@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/logo.svg" width="120" alt="OSINT Portal logo">
+</p>
+
 # OSINT Portal
 
 > Every OSINT tool in one place. Sherlock, netcat, nmap, whois and dozens more —
